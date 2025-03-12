@@ -1,116 +1,133 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
-import AuthLayout from "@/components/AuthLayout";
-import { Button } from "@/components/ui/button";
-import { InputWithIcon } from "@/components/ui/input-with-icon";
-import { Eye, EyeOff, User, Mail } from "lucide-react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 
-const Register: React.FC = () => {
-  const [name, setName] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
+export default function RegisterDetails() {
+  const [formData, setFormData] = useState({
+    name: "",
+    email: "",
+    password: "",
+    confirmPassword: "",
+  });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  const navigate = useNavigate();
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle registration
-    window.location.href = "/profile-setup";
+    navigate("/register/profile");
   };
 
   return (
-    <AuthLayout>
-      <div className="flex flex-col mt-8">
-        <h2 className="text-lg font-semibold mb-4 text-center">
-          Create Your Account
-        </h2>
+    <div className="flex flex-col items-center min-h-screen bg-white relative">
+      {/* Blue background with left-side curve */}
+      <div
+        className="absolute top-0 left-0 right-0 h-[250px] bg-[#0A1128] z-0"
+        style={{
+          borderBottomLeftRadius: "50%", // Curve only the left side
+          borderBottomRightRadius: "0%", // No curve on the right side
+        }}
+      >
+        {/* Logo and text */}
+        <div className="flex flex-col items-center justify-center h-full">
+          <img src="/logo.svg" alt="K'ELAL GATEWAY" className="w-24 h-24" />
+          <h1 className="text-xl font-bold text-center text-white mt-2">
+            K'ELAL GATEWAY
+          </h1>
+        </div>
+      </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <InputWithIcon
-            type="text"
-            placeholder="Full Name"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            className="w-full bg-white shadow-sm border-gray-200 py-3"
-            icon={<User className="w-5 h-5 text-gray-500" />}
-            iconPosition="left"
-            autoComplete="name"
-          />
+      {/* Centered Form content */}
+      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-md px-6 z-10">
+        <form
+          onSubmit={handleSubmit}
+          className="bg-white p-6 rounded-lg shadow-lg"
+        >
+          <div className="mb-4">
+            <input
+              type="text"
+              name="name"
+              placeholder="NAME"
+              className="w-full p-3 border border-gray-300 rounded-md"
+              value={formData.name}
+              onChange={handleChange}
+              required
+            />
+          </div>
 
-          <InputWithIcon
-            type="email"
-            placeholder="Email Address"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full bg-white shadow-sm border-gray-200 py-3"
-            icon={<Mail className="w-5 h-5 text-gray-500" />}
-            iconPosition="left"
-            autoComplete="email"
-          />
+          <div className="mb-4">
+            <input
+              type="email"
+              name="email"
+              placeholder="EMAIL"
+              className="w-full p-3 border border-gray-300 rounded-md"
+              value={formData.email}
+              onChange={handleChange}
+              required
+            />
+          </div>
 
-          <InputWithIcon
-            type={showPassword ? "text" : "password"}
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full bg-white shadow-sm border-gray-200 py-3"
-            icon={
-              showPassword ? (
-                <Eye
-                  className="cursor-pointer text-gray-500"
-                  onClick={() => setShowPassword(false)}
-                />
-              ) : (
-                <EyeOff
-                  className="cursor-pointer text-gray-500"
-                  onClick={() => setShowPassword(true)}
-                />
-              )
-            }
-            autoComplete="new-password"
-          />
+          <div className="mb-4 relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              name="password"
+              placeholder="PASSWORD"
+              className="w-full p-3 border border-gray-300 rounded-md"
+              value={formData.password}
+              onChange={handleChange}
+              required
+            />
+            <button
+              type="button"
+              className="absolute right-3 top-1/2 transform -translate-y-1/2"
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              {showPassword ? "👁️" : "🔒"}
+            </button>
+          </div>
 
-          <InputWithIcon
-            type={showConfirmPassword ? "text" : "password"}
-            placeholder="Confirm Password"
-            value={confirmPassword}
-            onChange={(e) => setConfirmPassword(e.target.value)}
-            className="w-full bg-white shadow-sm border-gray-200 py-3"
-            icon={
-              showConfirmPassword ? (
-                <Eye
-                  className="cursor-pointer text-gray-500"
-                  onClick={() => setShowConfirmPassword(false)}
-                />
-              ) : (
-                <EyeOff
-                  className="cursor-pointer text-gray-500"
-                  onClick={() => setShowConfirmPassword(true)}
-                />
-              )
-            }
-            autoComplete="new-password"
-          />
+          <div className="mb-4 relative">
+            <input
+              type={showConfirmPassword ? "text" : "password"}
+              name="confirmPassword"
+              placeholder="CONFIRM PASSWORD"
+              className="w-full p-3 border border-gray-300 rounded-md"
+              value={formData.confirmPassword}
+              onChange={handleChange}
+              required
+            />
+            <button
+              type="button"
+              className="absolute right-3 top-1/2 transform -translate-y-1/2"
+              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+            >
+              {showConfirmPassword ? "👁️" : "🔒"}
+            </button>
+          </div>
 
-          <Button
+          <button
             type="submit"
-            className="w-full bg-[#0A1128] hover:bg-[#0A1128]/90 text-white py-6 mt-6 rounded-full"
+            className="w-full bg-[#0A1128] text-white py-3 rounded-md font-bold mt-4"
           >
-            Register & Continue
-          </Button>
+            REGISTER & CONTINUE
+          </button>
 
-          <p className="text-center text-xs text-gray-600 mt-2">
-            By clicking Register, you agree to our
-            <br />
-            <Link to="/terms" className="font-bold text-blue-600">
-              Terms of Use
-            </Link>
+          <p className="text-center text-xs mt-2">
+            BY CLICKING REGISTER, YOU AGREE TO OUR{" "}
+            <a href="/terms" className="font-bold">
+              TERMS OF USE
+            </a>
           </p>
         </form>
       </div>
-    </AuthLayout>
+    </div>
   );
-};
-
-export default Register;
+}

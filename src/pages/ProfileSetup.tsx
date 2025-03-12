@@ -1,86 +1,101 @@
-import React, { useState } from "react";
-import AuthLayout from "@/components/AuthLayout";
+import React, { useState, useEffect } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import AuthLayout from "../components/AuthLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Camera, MapPin, Gift, Users } from "lucide-react";
 import { InputWithIcon } from "@/components/ui/input-with-icon";
+import { Calendar, MapPin } from "lucide-react";
 
 const ProfileSetup: React.FC = () => {
+  const [name, setName] = useState("");
+  const [bio, setBio] = useState("");
   const [birthday, setBirthday] = useState("");
   const [city, setCity] = useState("");
-  const [referenceCode, setReferenceCode] = useState("");
+  const navigate = useNavigate();
+
+  // Pre-fill name if available from registration
+  useEffect(() => {
+    const savedName = localStorage.getItem("userName");
+    if (savedName) {
+      setName(savedName);
+    }
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle profile setup
-    window.location.href = "/dashboard";
+    // Save profile data
+    localStorage.setItem("userBio", bio);
+    localStorage.setItem("userBirthday", birthday);
+    localStorage.setItem("userCity", city);
+    // Navigate to home page
+    navigate("/");
   };
 
   return (
     <AuthLayout>
-      <div className="flex flex-col mt-8 items-center">
-        <div className="w-24 h-24 rounded-full border-2 border-gray-300 flex items-center justify-center mb-2 bg-white shadow-sm">
-          <Camera className="w-10 h-10 text-gray-500" />
-          <span className="sr-only">Upload Photo</span>
-        </div>
-        <p className="text-center mb-6 text-sm text-gray-600">
-          Upload Profile Photo
-        </p>
+      <div className="flex flex-col mt-8">
+        <h2 className="text-lg font-semibold mb-4 text-center">
+          Set up your profile
+        </h2>
 
-        <div className="w-full">
-          <h2 className="text-lg font-semibold mb-2 text-center">
-            Complete Your Profile
-          </h2>
-          <p className="text-sm mb-4 text-center text-gray-600">
-            Get a free birthday ticket on us!
-          </p>
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <Input
+            type="text"
+            placeholder="Your Name"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full bg-white shadow-sm border-gray-200"
+            autoComplete="name"
+            required
+          />
 
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="relative">
-              <Input
-                type="date"
-                value={birthday}
-                onChange={(e) => setBirthday(e.target.value)}
-                className="w-full bg-white shadow-sm border-gray-200 py-3 pl-10"
-                autoComplete="bday"
-              />
-              <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
-                <Gift className="w-5 h-5 text-gray-500" />
-              </div>
+          <Input
+            type="text"
+            placeholder="Short Bio"
+            value={bio}
+            onChange={(e) => setBio(e.target.value)}
+            className="w-full bg-white shadow-sm border-gray-200"
+            autoComplete="off"
+          />
+
+          <div className="relative">
+            <div className="absolute left-3 top-1/2 transform -translate-y-1/2">
+              <Calendar className="w-5 h-5 text-gray-500" />
             </div>
-
-            <InputWithIcon
-              type="text"
-              placeholder="Your City"
-              value={city}
-              onChange={(e) => setCity(e.target.value)}
-              className="w-full bg-white shadow-sm border-gray-200 py-3"
-              icon={<MapPin className="w-5 h-5 text-gray-500" />}
-              iconPosition="left"
-              autoComplete="address-level2"
+            <Input
+              type="date"
+              value={birthday}
+              onChange={(e) => setBirthday(e.target.value)}
+              className="w-full bg-white shadow-sm border-gray-200 py-3 pl-10"
+              autoComplete="bday"
             />
+          </div>
 
-            <InputWithIcon
-              type="text"
-              placeholder="Referral Code (Optional)"
-              value={referenceCode}
-              onChange={(e) => setReferenceCode(e.target.value)}
-              className="w-full bg-white shadow-sm border-gray-200 py-3"
-              icon={<Users className="w-5 h-5 text-gray-500" />}
-              iconPosition="left"
-            />
+          <InputWithIcon
+            type="text"
+            placeholder="Your City"
+            value={city}
+            onChange={(e) => setCity(e.target.value)}
+            className="w-full bg-white shadow-sm border-gray-200 py-3"
+            icon={<MapPin className="w-5 h-5 text-gray-500" />}
+            iconPosition="left"
+            autoComplete="address-level2"
+          />
 
-            <p className="text-xs text-gray-500">
-              Enter a referral code from an invited member if you have one
-            </p>
+          <Button
+            type="submit"
+            className="w-full bg-[#0A1128] hover:bg-[#0A1128]/90 text-white py-6 rounded-full"
+          >
+            Save Profile
+          </Button>
+        </form>
 
-            <Button
-              type="submit"
-              className="w-full bg-[#0A1128] hover:bg-[#0A1128]/90 text-white py-6 mt-4 rounded-full"
-            >
-              Get Started
-            </Button>
-          </form>
+        <div className="mt-8 flex flex-col items-center space-y-6">
+          <p className="text-center text-sm text-gray-600">
+            <Link to="/dashboard" className="font-bold text-blue-600">
+              Skip for now
+            </Link>
+          </p>
         </div>
       </div>
     </AuthLayout>

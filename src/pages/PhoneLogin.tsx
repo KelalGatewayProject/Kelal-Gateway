@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import AuthLayout from "@/components/AuthLayout";
+import AuthLayout from "../components/AuthLayout";
 import { Button } from "@/components/ui/button";
 import { InputWithIcon } from "@/components/ui/input-with-icon";
 import { Facebook, Phone } from "lucide-react";
@@ -10,7 +10,9 @@ const PhoneLogin: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle phone submission
+    // Store phone number
+    localStorage.setItem("userPhone", phone);
+    // Navigate to verify code page using proper React Router navigation
     window.location.href = "/verify-code";
   };
 
