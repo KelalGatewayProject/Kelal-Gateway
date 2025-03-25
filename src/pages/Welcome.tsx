@@ -4,13 +4,13 @@ import { Button } from "@/components/ui/button";
 
 const Welcome: React.FC = () => {
   return (
-    <div className="flex flex-col min-h-screen w-full bg-gray-100">
+    <div className="flex flex-col min-h-screen w-full">
       {/* Header with Blue Background (75% of the screen) */}
       <div className="bg-[#0A1128] rounded-bl-[100px] h-[75vh] flex flex-col items-center justify-center relative">
         {/* Logo and Text */}
         <div className="flex flex-col items-center justify-center space-y-4">
           <img
-            src="https://imgur.com/JesyebX.png"
+            src="https://imgur.com/IblnJgd.png"
             alt="Logo"
             className="w-24 h-24" // Adjust logo size as needed
           />

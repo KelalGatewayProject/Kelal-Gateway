@@ -29,12 +29,12 @@ const PhoneLogin: React.FC = () => {
             placeholder="Enter your phone number"
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
-            className="w-full bg-white shadow-sm border-gray-200"
+            className="w-full shadow-sm border-gray-200"
             icon={<Phone className="w-5 h-5 text-gray-500" />}
             iconPosition="left"
             autoComplete="tel"
             pattern="[0-9]*"
-            inputMode="numeric"
+            inputMode="tel"
           />
 
           <p className="text-center text-sm text-gray-600">
@@ -57,14 +57,6 @@ const PhoneLogin: React.FC = () => {
               Log In
             </Link>
           </div>
-
-          <Button
-            variant="outline"
-            className="flex items-center space-x-2 w-full py-5 rounded-full"
-          >
-            <Facebook className="w-5 h-5 text-blue-600" />
-            <span>Continue with Facebook</span>
-          </Button>
         </div>
       </div>
     </AuthLayout>

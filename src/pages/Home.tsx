@@ -1,418 +1,728 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Link } from "react-router-dom";
-import {
-  Search,
-  Bell,
-  Menu,
-  Home as HomeIcon,
-  Calendar,
-  User,
-} from "lucide-react";
+import { useNavigate } from "react-router-dom";
+import { ChevronRight } from "lucide-react";
+import TopNavigation from "@/components/TopNavigation";
+import BottomNavigation from "@/components/BottomNavigation";
+import CategoryButton from "@/components/CategoryButton";
+import EventCard from "@/components/EventCard";
+import { supabase } from "@/lib/supabase";
+import { useAuth } from "@/context/AuthContext";
+
+interface Event {
+  id: string | number;
+  image: string;
+  title: string;
+  description: string;
+  date: string;
+  time: string;
+  price: string;
+  categories?: string[];
+  to?: string;
+  venue_name?: string;
+  organizer_name?: string;
+}
 
 const Home: React.FC = () => {
-  return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
-      {/* Top Navigation */}
-      <header className="bg-white border-b border-gray-200">
-        <div className="flex justify-between items-center p-3">
-          <div className="flex items-center">
-            <img
-              src="https://imgur.com/JesyebX.png"
-              alt="Kelal Logo"
-              className="h-8 w-8"
-            />
-          </div>
-          <div className="flex items-center space-x-4">
-            <div className="relative">
-              <img
-                src="https://imgur.com/JesyebX.png"
-                alt="Kelal Payment"
-                className="h-6 w-6"
-              />
-              <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-4 w-4 flex items-center justify-center">
-                1
-              </span>
+  const navigate = useNavigate();
+  const { userRole } = useAuth();
+  const [activeCategory, setActiveCategory] = useState<string>("ALL EVENTS");
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [featuredEvents, setFeaturedEvents] = useState<Event[]>([]);
+
+  useEffect(() => {
+    console.log("Home component rendered");
+    fetchEvents();
+  }, []);
+
+  const fetchEvents = async () => {
+    try {
+      setIsLoading(true);
+      const { data, error } = await supabase
+        .from("events")
+        .select(
+          `
+          id,
+          title,
+          description,
+          event_date,
+          start_time,
+          price,
+          image_url,
+          categories,
+          venue:venues(name),
+          organizer:organizers(name)
+        `,
+        )
+        .order("created_at", { ascending: false })
+        .limit(10);
+
+      if (error) {
+        console.error("Error fetching events:", error);
+        return;
+      }
+
+      if (data) {
+        const formattedEvents = data.map((event) => {
+          // Format the date
+          const eventDate = new Date(event.event_date);
+          const formattedDate = eventDate.toLocaleDateString("en-US", {
+            month: "long",
+            day: "numeric",
+          });
+
+          // Format the time
+          const timeString = event.start_time || "00:00:00";
+          const [hours, minutes] = timeString.split(":");
+          const hour = parseInt(hours, 10);
+          const ampm = hour >= 12 ? "PM" : "AM";
+          const formattedHour = hour % 12 || 12;
+          const formattedTime = `${formattedHour}:${minutes} ${ampm}`;
+
+          // Format the price
+          const formattedPrice = event.price === 0 ? "FREE" : `${event.price}`;
+
+          return {
+            id: event.id,
+            title: event.title,
+            description: event.description,
+            date: formattedDate,
+            time: formattedTime,
+            price: formattedPrice,
+            image:
+              event.image_url ||
+              "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=300&q=80",
+            categories: event.categories || [],
+            to: `/event/${event.id}`,
+            venue_name: event.venue?.name,
+            organizer_name: event.organizer?.name,
+          };
+        });
+
+        setFeaturedEvents(formattedEvents);
+      }
+    } catch (error) {
+      console.error("Error in fetchEvents:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Fallback demo events data with categories
+  const allEvents = [
+    {
+      id: 1,
+      image: "https://imgur.com/HQ6DO2e.png",
+      title: "JULIAN MARLEY",
+      description: "Festival lovers, families, reggae lovers!!!",
+      date: "July 20",
+      time: "7:00 PM",
+      price: "FREE",
+      categories: ["MUSIC", "ARTS & CULTURE"],
+    },
+    {
+      id: 2,
+      image:
+        "https://images.unsplash.com/photo-1472653431158-6364773b2a56?w=300&q=80",
+      title: "LinkUp Bazaar",
+      description:
+        "Two-day bazaar and family festival with more than 85 vendors",
+      date: "Oct 22",
+      time: "9:00 AM",
+      price: "FREE",
+      categories: ["FOOD & DRINKS", "ARTS & CULTURE", "BUSINESS"],
+    },
+    {
+      id: 3,
+      image:
+        "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300&q=80",
+      title: "TGI Fridaze",
+      description: "The best Friday night party in town!",
+      date: "Aug 25",
+      time: "10:00 PM",
+      price: "FREE",
+      categories: ["NIGHTLIFE", "MUSIC"],
+    },
+    {
+      id: 4,
+      image:
+        "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=300&q=80",
+      title: "Addis Music Festival",
+      description:
+        "Annual music festival featuring top local and international artists",
+      date: "Sep 15",
+      time: "4:00 PM",
+      price: "FREE",
+      categories: ["MUSIC", "ARTS & CULTURE"],
+    },
+    {
+      id: 5,
+      image:
+        "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=300&q=80",
+      title: "Sunday Brunch",
+      description: "Gourmet brunch with unlimited mimosas",
+      date: "Oct 10",
+      time: "11:00 AM",
+      price: "FREE",
+      categories: ["FOOD & DRINKS"],
+    },
+  ];
+
+  // Fallback featured events data in case the API call fails
+  const fallbackEvents = [
+    {
+      id: 2,
+      image:
+        "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=300&q=80",
+      title: "አሁድ mood",
+      description: "Following that, enjoy a delicious BBQ pop-up...",
+      date: "October 13",
+      time: "2:30 PM",
+      price: "FREE",
+      to: "/event/2",
+    },
+    {
+      id: 3,
+      image:
+        "https://images.unsplash.com/photo-1528495612343-9ca9f4a4de28?w=300&q=80",
+      title: "Jubilation Africa",
+      description: "Afrocentric celebration featuring top DJs...",
+      date: "March 23",
+      time: "4:00 PM",
+      price: "FREE",
+      to: "/event/3",
+    },
+    {
+      id: 1,
+      image: "https://imgur.com/HQ6DO2e.png",
+      title: "JULIAN MARLEY",
+      description: "Festival lovers, families, reggae lovers!!!",
+      date: "July 20",
+      time: "7:00 PM",
+      price: "FREE",
+      to: "/event/1",
+    },
+    {
+      id: "bazaar",
+      image:
+        "https://images.unsplash.com/photo-1472653431158-6364773b2a56?w=300&q=80",
+      title: "LINKUP BAZAAR & FAMILY FEST",
+      description:
+        "LinkUp Bazaar is back bigger and better! The monthly bazaar has got a new home at the stunningly beautiful...",
+      date: "OCT 12-13",
+      time: "9:00 AM",
+      price: "FREE",
+      to: "/event/bazaar",
+    },
+    {
+      id: 5,
+      image:
+        "https://images.unsplash.com/photo-1576858574144-9ae1ebcf5ae5?w=300&q=80",
+      title: "4th Annual Walk",
+      description: "Time to lace up those walking shoes for Breast Cancer...",
+      date: "October 23",
+      time: "9:00 AM",
+      price: "FREE",
+      to: "/event/5",
+    },
+  ];
+
+  const handleExploreMoreClick = () => {
+    navigate("/category/ALL%20EVENTS");
+  };
+
+  // Render different content based on user role
+  const renderContent = () => {
+    if (userRole === "organizer") {
+      return renderOrganizerDashboard();
+    } else {
+      return renderAttendeeHome();
+    }
+  };
+
+  // Organizer dashboard content
+  const renderOrganizerDashboard = () => {
+    return (
+      <div className="pb-16">
+        <div className="p-4 bg-white rounded-lg shadow-md mb-4">
+          <h2 className="text-xl font-bold mb-2">Welcome, Event Organizer!</h2>
+          <p className="text-gray-600 mb-4">
+            Manage your events and track ticket sales from your dashboard.
+          </p>
+          <div className="grid grid-cols-2 gap-4 mb-4">
+            <div className="bg-blue-50 p-3 rounded-lg">
+              <h3 className="font-semibold">Active Events</h3>
+              <p className="text-2xl font-bold">3</p>
             </div>
-            <Menu className="h-6 w-6" />
-            <Bell className="h-6 w-6" />
-            <Search className="h-6 w-6" />
+            <div className="bg-green-50 p-3 rounded-lg">
+              <h3 className="font-semibold">Tickets Sold</h3>
+              <p className="text-2xl font-bold">127</p>
+            </div>
+          </div>
+          <Button
+            onClick={() => navigate("/event-organizer-dashboard")}
+            className="w-full bg-[#0A1128]"
+          >
+            Go to Dashboard
+          </Button>
+        </div>
+
+        <div className="p-4">
+          <h2 className="text-lg font-bold mb-4">YOUR RECENT EVENTS</h2>
+          <div className="space-y-4">
+            {fallbackEvents.slice(0, 3).map((event) => (
+              <div
+                key={event.id}
+                className="mb-4"
+                onClick={() => navigate(`/event/${event.id}`)}
+              >
+                <EventCard
+                  image={event.image}
+                  title={event.title}
+                  description={event.description}
+                  date={event.date}
+                  time={event.time}
+                  price={
+                    event.price === "FREE" ? (
+                      <span className="text-green-500 font-semibold">FREE</span>
+                    ) : (
+                      <span className="text-red-500 font-semibold">
+                        {event.price}
+                      </span>
+                    )
+                  }
+                  onFollow={() =>
+                    console.log(`Following event: ${event.title}`)
+                  }
+                />
+              </div>
+            ))}
           </div>
         </div>
-
-        {/* Categories */}
-        <div className="flex justify-between items-center px-3 py-2 bg-white border-b border-gray-200 text-sm font-semibold">
-          <div>CATEGORIES</div>
-          <div>VENUES & CLUBS</div>
-          <div>EVENT ORG</div>
-        </div>
-      </header>
-
-      {/* Event Categories */}
-      <div className="flex overflow-x-auto p-3 border-b border-gray-200">
-        <Link
-          to="/events"
-          className="flex flex-col items-center justify-center w-16 h-16 border border-gray-300 rounded-lg mx-2"
-        >
-          <span className="text-2xl">🎵</span>
-          <span className="text-xs mt-1 text-center">All Events</span>
-        </Link>
-        <Link
-          to="/parties"
-          className="flex flex-col items-center justify-center w-16 h-16 border border-gray-300 rounded-lg mx-2"
-        >
-          <span className="text-2xl">🎧</span>
-          <span className="text-xs mt-1 text-center">PARTIES</span>
-        </Link>
-        <Link
-          to="/concerts"
-          className="flex flex-col items-center justify-center w-16 h-16 border border-gray-300 rounded-lg mx-2"
-        >
-          <span className="text-2xl">🎤</span>
-          <span className="text-xs mt-1 text-center">CONCERT</span>
-        </Link>
-        <Link
-          to="/activities"
-          className="flex flex-col items-center justify-center w-16 h-16 border border-gray-300 rounded-lg mx-2"
-        >
-          <span className="text-2xl">🎫</span>
-          <span className="text-xs mt-1 text-center">ACTIVITIES</span>
-        </Link>
-        <Link
-          to="/festivals"
-          className="flex flex-col items-center justify-center w-16 h-16 border border-gray-300 rounded-lg mx-2"
-        >
-          <span className="text-2xl">🎉</span>
-          <span className="text-xs mt-1 text-center">FESTIVALS</span>
-        </Link>
-        <Link
-          to="/conventions"
-          className="flex flex-col items-center justify-center w-16 h-16 border border-gray-300 rounded-lg mx-2"
-        >
-          <span className="text-2xl">📜</span>
-          <span className="text-xs mt-1 text-center">CONVENTIONS</span>
-        </Link>
-        <Link
-          to="/networking"
-          className="flex flex-col items-center justify-center w-16 h-16 border border-gray-300 rounded-lg mx-2"
-        >
-          <span className="text-2xl">🤝</span>
-          <span className="text-xs mt-1 text-center">NETWORKING</span>
-        </Link>
-        <Link
-          to="/sports"
-          className="flex flex-col items-center justify-center w-16 h-16 border border-gray-300 rounded-lg mx-2"
-        >
-          <span className="text-2xl">⚽</span>
-          <span className="text-xs mt-1 text-center">SPORTS</span>
-        </Link>
-        <Link
-          to="/school"
-          className="flex flex-col items-center justify-center w-16 h-16 border border-gray-300 rounded-lg mx-2"
-        >
-          <span className="text-2xl">🎓</span>
-          <span className="text-xs mt-1 text-center">SCHOOL</span>
-        </Link>
       </div>
+    );
+  };
 
-      {/* Main Content */}
-      <main className="flex-1 p-3">
+  // Attendee home content
+  const renderAttendeeHome = () => {
+    return (
+      <div className="flex-1 pb-16">
         {/* Newly Added Events */}
-        <h2 className="text-lg font-bold my-4">NEWLY ADDED EVENTS</h2>
-
-        {/* Event List */}
-        <div
-          className="space-y-4 overflow-y-auto"
-          style={{ maxHeight: "400px" }}
-        >
-          {/* Event 1 */}
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-            <div className="flex">
-              <img
-                src="https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=300&q=80"
-                alt="Event"
-                className="w-20 h-20 object-cover"
-              />
-              <div className="p-2 flex-1">
-                <h3 className="font-semibold">አሁድ mood</h3>
-                <p className="text-xs text-gray-600">
-                  Following that, enjoy a delicious BBQ pop-up...
-                </p>
-                <div className="flex justify-between mt-1 text-xs">
-                  <span>October 13</span>
-                  <span>2:30 PM</span>
-                  <span className="text-green-500 font-semibold">FREE</span>
-                </div>
-              </div>
-              <div className="flex items-center pr-2">
-                <div className="bg-gray-200 p-1 rounded-full">
-                  <span className="text-lg">♿</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Event 2 */}
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-            <div className="flex">
-              <img
-                src="https://images.unsplash.com/photo-1528495612343-9ca9f4a4de28?w=300&q=80"
-                alt="Event"
-                className="w-20 h-20 object-cover"
-              />
-              <div className="p-2 flex-1">
-                <h3 className="font-semibold">Jubilation Africa</h3>
-                <p className="text-xs text-gray-600">
-                  Afrocentric celebration featuring top DJs...
-                </p>
-                <div className="flex justify-between mt-1 text-xs">
-                  <span>March 23</span>
-                  <span>4:00 PM</span>
-                  <span className="text-red-500 font-semibold">500</span>
-                </div>
-              </div>
-              <div className="flex items-center pr-2">
-                <div className="bg-gray-200 p-1 rounded-full">
-                  <span className="text-lg">♿</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Sponsored Ad */}
-          <div className="bg-red-600 text-white p-2 rounded-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <span className="text-xs">SPONSORED</span>
-                <div className="flex items-center">
-                  <span className="text-sm font-bold">
-                    The Gift That MAKES AN ENTRANCE
-                  </span>
-                  <img
-                    src="https://images.unsplash.com/photo-1569529465841-dfecdab7503b?w=100&q=80"
-                    alt="Johnnie Walker"
-                    className="h-10 ml-2"
-                  />
-                </div>
-              </div>
-              <button className="bg-black text-white text-xs px-2 py-1 rounded">
-                DISCOVER MORE
-              </button>
-            </div>
-          </div>
-
-          {/* Event 3 */}
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-            <div className="flex">
-              <img
-                src="https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6a3?w=300&q=80"
-                alt="Event"
-                className="w-20 h-20 object-cover"
-              />
-              <div className="p-2 flex-1">
-                <h3 className="font-semibold">JULIAN MARLEY</h3>
-                <p className="text-xs text-gray-600">
-                  Festival lovers, families, reggae lovers!!!
-                </p>
-                <div className="flex justify-between mt-1 text-xs">
-                  <span>July 20</span>
-                  <span>7:00 PM</span>
-                  <div>
-                    <span className="text-red-500 font-semibold">GEN: 600</span>
-                    <span className="text-red-500 font-semibold ml-1">
-                      VIP: 1200
-                    </span>
+        <div className="px-3 pt-2">
+          <h2 className="text-lg font-bold mb-4">NEWLY ADDED EVENTS</h2>
+          {/* Event List */}
+          <div className="space-y-4">
+            {isLoading ? (
+              // Loading state
+              <div className="flex flex-col space-y-4">
+                {[1, 2, 3, 4].map((item) => (
+                  <div
+                    key={item}
+                    className="bg-white rounded-lg border border-gray-200 overflow-hidden shadow-md h-20 animate-pulse"
+                  >
+                    <div className="flex">
+                      <div className="w-20 h-20 bg-gray-200"></div>
+                      <div className="p-2 flex-1">
+                        <div className="h-4 bg-gray-200 rounded w-3/4 mb-2"></div>
+                        <div className="h-3 bg-gray-200 rounded w-full mb-2"></div>
+                        <div className="flex justify-between mt-1">
+                          <div className="h-3 bg-gray-200 rounded w-1/4"></div>
+                          <div className="h-3 bg-gray-200 rounded w-1/4"></div>
+                          <div className="h-3 bg-gray-200 rounded w-1/4"></div>
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                </div>
+                ))}
               </div>
-              <div className="flex items-center pr-2">
-                <div className="bg-gray-200 p-1 rounded-full">
-                  <span className="text-lg">♿</span>
-                </div>
-              </div>
-            </div>
+            ) : featuredEvents.length > 0 ? (
+              // Event Cards
+              featuredEvents.map((event, index) => (
+                <React.Fragment key={event.id}>
+                  {index === 2 && (
+                    /* Sponsored Ad after the second event */
+                    <div className="bg-red-600 text-white p-2 rounded-lg shadow-md">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-xs">SPONSORED</span>
+                          <div className="flex items-center">
+                            <span className="text-sm font-bold">
+                              The Gift That MAKES AN ENTRANCE
+                            </span>
+                            <img
+                              src="https://images.unsplash.com/photo-1569529465841-dfecdab7503b?w=100&q=80"
+                              alt="Johnnie Walker"
+                              className="h-10 ml-2"
+                            />
+                          </div>
+                        </div>
+                        <button className="bg-black text-white text-xs px-2 py-1 rounded">
+                          DISCOVER MORE
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  <div
+                    className="mb-4"
+                    onClick={() => navigate(`/event/${event.id}`)}
+                  >
+                    <EventCard
+                      image={event.image}
+                      title={event.title}
+                      description={event.description}
+                      date={event.date}
+                      time={event.time}
+                      price={
+                        event.price === "FREE" ? (
+                          <span className="text-green-500 font-semibold">
+                            FREE
+                          </span>
+                        ) : (
+                          <span className="text-red-500 font-semibold">
+                            {event.price}
+                          </span>
+                        )
+                      }
+                      onFollow={() =>
+                        console.log(`Following event: ${event.title}`)
+                      }
+                    />
+                  </div>
+                </React.Fragment>
+              ))
+            ) : (
+              // Fallback to demo events if no events from API
+              fallbackEvents.map((event, index) => (
+                <React.Fragment key={event.id}>
+                  {index === 2 && (
+                    /* Sponsored Ad after the second event */
+                    <div className="bg-red-600 text-white p-2 rounded-lg shadow-md">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="text-xs">SPONSORED</span>
+                          <div className="flex items-center">
+                            <span className="text-sm font-bold">
+                              The Gift That MAKES AN ENTRANCE
+                            </span>
+                            <img
+                              src="https://images.unsplash.com/photo-1569529465841-dfecdab7503b?w=100&q=80"
+                              alt="Johnnie Walker"
+                              className="h-10 ml-2"
+                            />
+                          </div>
+                        </div>
+                        <button className="bg-black text-white text-xs px-2 py-1 rounded">
+                          DISCOVER MORE
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                  <div
+                    className="mb-4"
+                    onClick={() => navigate(`/event/${event.id}`)}
+                  >
+                    <EventCard
+                      image={event.image}
+                      title={event.title}
+                      description={event.description}
+                      date={event.date}
+                      time={event.time}
+                      price={
+                        event.price === "FREE" ? (
+                          <span className="text-green-500 font-semibold">
+                            FREE
+                          </span>
+                        ) : (
+                          <span className="text-red-500 font-semibold">
+                            {event.price}
+                          </span>
+                        )
+                      }
+                      onFollow={() =>
+                        console.log(`Following event: ${event.title}`)
+                      }
+                    />
+                  </div>
+                </React.Fragment>
+              ))
+            )}
           </div>
+        </div>
 
-          {/* Event 4 */}
-          <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
-            <div className="flex">
-              <img
-                src="https://images.unsplash.com/photo-1472653431158-6364773b2a56?w=300&q=80"
-                alt="Event"
-                className="w-20 h-20 object-cover"
-              />
-              <div className="p-2 flex-1">
-                <h3 className="font-semibold">LinkUp Bazaar</h3>
-                <p className="text-xs text-gray-600">
-                  Two-day food and family festival with more than 85...
-                </p>
-                <div className="flex justify-between mt-1 text-xs">
-                  <span>October 23</span>
-                  <span>9:00 AM</span>
-                  <span className="text-green-500 font-semibold">FREE</span>
-                </div>
-              </div>
-              <div className="flex items-center pr-2">
-                <div className="bg-gray-200 p-1 rounded-full">
-                  <span className="text-lg">♿</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Explore More Button */}
-          <div className="flex justify-center my-4">
-            <Button className="bg-black text-white px-4 py-2 rounded-md">
-              EXPLORE MORE EVENTS
-            </Button>
-          </div>
+        {/* EXPLORE MORE EVENTS Button */}
+        <div className="flex justify-center my-6">
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              handleExploreMoreClick();
+            }}
+            className="bg-[#030F29] text-white px-6 py-2 rounded-lg font-semibold hover:bg-[#E64A19] transition-colors event-fix"
+          >
+            EXPLORE MORE EVENTS
+          </button>
         </div>
 
         {/* Venues & Clubs */}
-        <div className="my-6">
+        <div className="my-6 px-3">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-bold">VENUES & CLUBS</h2>
-            <span className="text-lg">→</span>
+            <ChevronRight
+              className="h-6 w-6 cursor-pointer"
+              onClick={() => navigate("/venues-and-clubs")}
+            />
           </div>
 
-          <div className="flex space-x-4 overflow-x-auto pb-2">
-            <div className="flex flex-col items-center min-w-[100px]">
-              <div className="w-16 h-16 rounded-full bg-black flex items-center justify-center mb-2">
-                <span className="text-green-500 text-2xl">W</span>
-              </div>
-              <span className="text-xs text-center font-semibold">
-                THE VENUE WARHOUSE
-              </span>
-              <Button
-                variant="outline"
-                className="mt-1 text-xs py-0 h-6 rounded-full bg-black text-white border-none"
-              >
-                Follow
-              </Button>
-            </div>
+          {/* Scrollable Container - Horizontal Scroll */}
+          <div className="overflow-x-auto pb-2 -mx-3 px-3">
+            <div className="flex space-x-6 w-max">
+              {[
+                {
+                  name: "THE VENUE\nWARHOUSE",
+                  image: "https://imgur.com/s9EMYLA.png",
+                },
+                {
+                  name: "FLIRT\nLOUNGE",
+                  image: "https://imgur.com/S5NMv0m.png",
+                },
+                {
+                  name: "V\nLOUNGE",
+                  image: "https://imgur.com/xHIYcsg.png",
+                },
+                {
+                  name: "XO\nCLUB",
+                  image: "https://imgur.com/Zrd6FQ2.png",
+                },
+                {
+                  name: "LUXX\nADDIS",
+                  image: "https://imgur.com/k7LHzWB.png",
+                },
+              ].map((venue, index) => (
+                <div
+                  key={index}
+                  className="flex flex-col items-center w-[102px] h-[141px] bg-white p-2 rounded-lg border border-gray-200 shadow-md flex-shrink-0 cursor-pointer"
+                  style={{
+                    boxShadow: "0 9px 6px rgba(0, 0, 0, 0.1)",
+                  }}
+                  onClick={() => console.log(`Clicked on venue: ${venue.name}`)}
+                >
+                  <div className="w-16 h-16 rounded-full flex items-center justify-center mb-2">
+                    <img
+                      src={venue.image}
+                      alt={venue.name}
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                  <span className="text-xs text-center font-semibold whitespace-pre-wrap">
+                    {venue.name}
+                  </span>
+                  <Button
+                    variant="outline"
+                    className="mt-1 text-xs py-0 h-6 rounded-full bg-black text-white border-none"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      console.log(`Following venue: ${venue.name}`);
+                    }}
+                  >
+                    Follow
+                  </Button>
+                </div>
+              ))}
 
-            <div className="flex flex-col items-center min-w-[100px]">
-              <div className="w-16 h-16 rounded-full bg-black flex items-center justify-center mb-2">
-                <span className="text-yellow-500 text-2xl">F</span>
-              </div>
-              <span className="text-xs text-center font-semibold">
-                FLIRT LOUNGE
-              </span>
-              <Button
-                variant="outline"
-                className="mt-1 text-xs py-0 h-6 rounded-full bg-black text-white border-none"
+              {/* Standalone "See All Venues" Icon */}
+              <div
+                className="flex flex-col items-center min-w-[60px] justify-center cursor-pointer"
+                onClick={() => navigate("/venues-and-clubs")}
               >
-                Follow
-              </Button>
-            </div>
-
-            <div className="flex flex-col items-center min-w-[100px]">
-              <div className="w-16 h-16 rounded-full bg-white border border-red-500 flex items-center justify-center mb-2">
-                <span className="text-red-500 text-2xl">V</span>
+                <div
+                  className="rounded-full w-[61px] h-[61px] flex items-center justify-center"
+                  style={{
+                    boxShadow: "0 9px 6px rgba(0, 0, 0, 0.1)",
+                  }}
+                >
+                  <img
+                    src="https://imgur.com/7AY4Tqx.png"
+                    alt="See All Venues"
+                    className="w-[34px] h-[34px] object-contain"
+                  />
+                </div>
+                <span className="text-xs text-center font-semibold mt-1">
+                  SEE ALL <br /> VENUES
+                </span>
               </div>
-              <span className="text-xs text-center font-semibold">
-                V LOUNGE
-              </span>
-              <Button
-                variant="outline"
-                className="mt-1 text-xs py-0 h-6 rounded-full bg-black text-white border-none"
-              >
-                Follow
-              </Button>
             </div>
           </div>
         </div>
 
         {/* Event Organizers */}
-        <div className="my-6">
+        <div className="my-6 px-3">
           <div className="flex justify-between items-center mb-4">
             <h2 className="text-lg font-bold">EVENT ORGANIZERS</h2>
-            <span className="text-lg">→</span>
+            <ChevronRight
+              className="h-6 w-6 cursor-pointer"
+              onClick={() => navigate("/event-organizers")}
+            />
           </div>
 
-          <div className="flex space-x-4 overflow-x-auto pb-2">
-            <div className="flex flex-col items-center min-w-[120px] bg-white p-2 rounded-lg border border-gray-200">
-              <div className="w-16 h-16 flex items-center justify-center mb-2">
-                <img
-                  src="https://api.dicebear.com/7.x/avataaars/svg?seed=shega"
-                  alt="Shega Events"
-                  className="w-full h-full"
-                />
-              </div>
-              <span className="text-xs text-center font-semibold">
-                SHEGA EVENTS AND PROMOTION
-              </span>
-              <Button
-                variant="outline"
-                className="mt-1 text-xs py-0 h-6 rounded-full bg-black text-white border-none"
-              >
-                Follow
-              </Button>
-            </div>
+          {/* Scrollable Container - Horizontal Scroll */}
+          <div className="overflow-x-auto pb-2 -mx-3 px-3">
+            <div className="flex space-x-6 w-max">
+              {[
+                {
+                  name: "SHEGA EVENTS\nAND PROMOTION",
+                  image: "https://imgur.com/ve0BjeU.png",
+                },
+                {
+                  name: "RIDON\nEVENTS",
+                  image: "https://imgur.com/aQAfLTV.png",
+                },
+                {
+                  name: "CHIMP\nEVENTS",
+                  image: "https://imgur.com/mM6u8Nq.png",
+                },
+                {
+                  name: "DANNY\nDAVIS",
+                  image: "https://imgur.com/HdlpvTQ.png",
+                },
+                {
+                  name: "LINKLUP\nADDIS",
+                  image: "https://imgur.com/s8Z8dkV.png",
+                },
+              ].map((organizer, index) => (
+                <div
+                  key={index}
+                  className="flex flex-col items-center w-[111px] h-[170px] bg-white p-2 rounded-lg border border-gray-200 shadow-md flex-shrink-0 cursor-pointer"
+                  style={{
+                    boxShadow: "0 9px 6px rgba(0, 0, 0, 0.1)",
+                  }}
+                  onClick={() =>
+                    console.log(`Clicked on organizer: ${organizer.name}`)
+                  }
+                >
+                  <div
+                    className="rounded-lg w-[111px] h-[109px] overflow-hidden mb-2"
+                    style={{
+                      boxShadow: "0 9px 6px rgba(0, 0, 0, 0.1)",
+                    }}
+                  >
+                    <img
+                      src={organizer.image}
+                      alt={organizer.name}
+                      className="w-full h-full object-cover rounded-lg"
+                    />
+                  </div>
+                  <span className="text-xs text-center font-semibold whitespace-pre-wrap">
+                    {organizer.name}
+                  </span>
+                  <Button
+                    variant="outline"
+                    className="mt-2 text-xs py-0 h-6 rounded-full bg-black text-white border-none"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      console.log(`Following organizer: ${organizer.name}`);
+                    }}
+                  >
+                    Follow
+                  </Button>
+                </div>
+              ))}
 
-            <div className="flex flex-col items-center min-w-[120px] bg-black p-2 rounded-lg">
-              <div className="w-16 h-16 flex items-center justify-center mb-2">
-                <span className="text-orange-500 text-2xl font-bold">
-                  RIDON
+              {/* Standalone "See All Organizers" Icon */}
+              <div
+                className="flex flex-col items-center min-w-[60px] justify-center cursor-pointer"
+                onClick={() => navigate("/event-organizers")}
+              >
+                <div
+                  className="rounded-full w-[61px] h-[61px] flex items-center justify-center"
+                  style={{
+                    boxShadow: "0 9px 6px rgba(0, 0, 0, 0.1)",
+                  }}
+                >
+                  <img
+                    src="https://imgur.com/7AY4Tqx.png"
+                    alt="See All Organizers"
+                    className="w-[34px] h-[34px] object-contain"
+                  />
+                </div>
+                <span className="text-xs text-center font-semibold mt-1">
+                  SEE ALL <br /> ORGANIZERS
                 </span>
               </div>
-              <span className="text-xs text-center font-semibold text-white">
-                RIDON EVENTS
-              </span>
-              <Button
-                variant="outline"
-                className="mt-1 text-xs py-0 h-6 rounded-full bg-black text-white border border-white"
-              >
-                Follow
-              </Button>
-            </div>
-
-            <div className="flex flex-col items-center min-w-[120px] bg-white p-2 rounded-lg border border-gray-200">
-              <div className="w-16 h-16 flex items-center justify-center mb-2">
-                <span className="text-yellow-500 text-2xl font-bold">F</span>
-              </div>
-              <span className="text-xs text-center font-semibold">
-                CHIMP EVENTS
-              </span>
-              <Button
-                variant="outline"
-                className="mt-1 text-xs py-0 h-6 rounded-full bg-black text-white border-none"
-              >
-                Follow
-              </Button>
             </div>
           </div>
         </div>
 
-        {/* Copyright */}
+        {/* Copyright Text */}
         <div className="text-center text-xs text-gray-500 my-6">
-          ©COPYRIGHT 2024/25 K'ELAL GATEWAY PLC
+          © Copyright 2025 KELAL GATEWAY
+        </div>
+      </div>
+    );
+  };
+
+  return (
+    <div className="flex flex-col min-h-screen bg-gray-50">
+      {/* Background Image with Opacity */}
+      <div
+        className="fixed inset-0 z-0 bg-cover bg-center"
+        style={{
+          backgroundImage: "url(https://imgur.com/9NT8Cbi.png)",
+          opacity: "0.1",
+        }}
+      />
+
+      <TopNavigation />
+
+      {/* Header Sections - Only show for non-organizers */}
+      {userRole !== "organizer" && (
+        <div className="sticky top-[57px] left-0 right-0 z-10 bg-[#fefdfb]">
+          {/* Categories Section */}
+          <section className="border-b border-gray-200 w-full">
+            <div className="flex overflow-x-auto p-3 gap-2 scrollbar-hide w-full">
+              <CategoryButton to="/category/ALL%20EVENTS" label="All Events" />
+              <CategoryButton
+                to="/category/NIGHTLIFE"
+                icon="🕺"
+                label="PARTIES"
+              />
+              <CategoryButton to="/category/MUSIC" icon="🎤" label="CONCERT" />
+              <CategoryButton
+                to="/category/ARTS%20%26%20CULTURE"
+                icon="🎟️"
+                label="ACTIVITIES"
+              />
+              <CategoryButton
+                to="/category/FESTIVALS"
+                icon="🏠"
+                label="FESTIVALS"
+              />
+              <CategoryButton
+                to="/category/BUSINESS"
+                icon="✖️"
+                label="CONVENTIONS"
+              />
+              <CategoryButton
+                to="/category/NETWORKING"
+                icon="🔗"
+                label="NETWORKING"
+              />
+              <CategoryButton to="/category/SPORTS" icon="⚽" label="SPORTS" />
+              <CategoryButton to="/category/SCHOOL" icon="🎓" label="SCHOOL" />
+            </div>
+            {/* Black Line */}
+            <div className="border-b border-black"></div>
+          </section>
+        </div>
+      )}
+
+      {/* Main Content - Conditionally render based on user role */}
+      <main className="flex-1 overflow-y-auto">
+        <div className={userRole === "organizer" ? "pt-2 pb-16" : "pt-2 pb-16"}>
+          {renderContent()}
         </div>
       </main>
 
-      {/* Bottom Navigation */}
-      <nav className="bg-gray-100 border-t border-gray-200 fixed bottom-0 w-full">
-        <div className="flex justify-around items-center h-16">
-          <Link to="/" className="flex flex-col items-center text-blue-600">
-            <HomeIcon className="h-5 w-5" />
-            <span className="text-xs mt-1">Home</span>
-          </Link>
-          <Link
-            to="/profile"
-            className="flex flex-col items-center text-gray-500"
-          >
-            <User className="h-5 w-5" />
-            <span className="text-xs mt-1">Profile</span>
-          </Link>
-          <Link
-            to="/calendar"
-            className="flex flex-col items-center text-gray-500"
-          >
-            <Calendar className="h-5 w-5" />
-            <span className="text-xs mt-1">Calendar</span>
-          </Link>
-        </div>
-      </nav>
+      <BottomNavigation />
     </div>
   );
 };

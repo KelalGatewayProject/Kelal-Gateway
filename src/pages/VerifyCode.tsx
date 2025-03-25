@@ -37,6 +37,7 @@ const VerifyCode: React.FC = () => {
               <Input
                 key={index}
                 type="text"
+                inputMode="numeric"
                 value={code[index] || ""}
                 onChange={(e) => {
                   const newCode = code.split("");
@@ -51,7 +52,7 @@ const VerifyCode: React.FC = () => {
                     if (nextInput) nextInput.focus();
                   }
                 }}
-                className="w-12 h-12 text-center text-lg font-bold bg-white shadow-sm border-gray-200"
+                className="w-12 h-12 text-center text-lg font-bold shadow-sm border-gray-200"
                 maxLength={1}
                 name={`code-${index}`}
                 autoComplete="one-time-code"

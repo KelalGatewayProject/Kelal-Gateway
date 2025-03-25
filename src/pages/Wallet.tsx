@@ -8,6 +8,7 @@ import {
   ArrowDownRight,
   Plus,
 } from "lucide-react";
+import PageLayout from "@/components/PageLayout";
 
 const Wallet: React.FC = () => {
   const navigate = useNavigate();
@@ -52,25 +53,13 @@ const Wallet: React.FC = () => {
   ];
 
   return (
-    <div className="flex flex-col min-h-screen relative">
-      {/* Background Image with Opacity */}
-      <div
-        className="absolute inset-0 z-0 bg-cover bg-center"
-        style={{
-          backgroundImage: "url(https://imgur.com/fSvWmgU.png)",
-          opacity: "0.1",
-        }}
-      />
-
-      {/* Header */}
-      <header className="bg-white border-b border-gray-200 relative z-10">
-        <div className="flex items-center p-4">
-          <button onClick={() => navigate(-1)} className="mr-4">
-            <ArrowLeft className="h-6 w-6" />
-          </button>
-          <h1 className="text-xl font-bold">WALLET</h1>
-        </div>
-      </header>
+    <PageLayout>
+      <div className="flex items-center p-4">
+        <button onClick={() => navigate(-1)} className="mr-4">
+          <ArrowLeft className="h-6 w-6" />
+        </button>
+        <h1 className="text-xl font-bold">WALLET</h1>
+      </div>
 
       <main className="flex-1 p-4 relative z-10">
         {/* Credit Card */}
@@ -163,63 +152,7 @@ const Wallet: React.FC = () => {
           </div>
         </div>
       </main>
-
-      {/* Bottom Navigation */}
-      <nav className="bg-gray-100 border-t border-gray-200 fixed bottom-0 w-full z-10">
-        <div className="flex justify-around items-center h-16">
-          <Link to="/" className="flex flex-col items-center text-gray-500">
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"
-              ></path>
-            </svg>
-            <span className="text-xs mt-1">Home</span>
-          </Link>
-          <Link
-            to="/profile"
-            className="flex flex-col items-center text-gray-500"
-          >
-            <div className="w-6 h-6 rounded-full overflow-hidden">
-              <img
-                src="https://api.dicebear.com/7.x/avataaars/svg?seed=user"
-                alt="Profile"
-                className="w-full h-full"
-              />
-            </div>
-            <span className="text-xs mt-1">Profile</span>
-          </Link>
-          <Link
-            to="/calendar"
-            className="flex flex-col items-center text-gray-500"
-          >
-            <svg
-              className="w-6 h-6"
-              fill="none"
-              stroke="currentColor"
-              viewBox="0 0 24 24"
-              xmlns="http://www.w3.org/2000/svg"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-              ></path>
-            </svg>
-            <span className="text-xs mt-1">Calendar</span>
-          </Link>
-        </div>
-      </nav>
-    </div>
+    </PageLayout>
   );
 };
 

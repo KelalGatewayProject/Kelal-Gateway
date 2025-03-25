@@ -67,7 +67,7 @@ const VenuesAndClubs: React.FC = () => {
       <div
         className="absolute inset-0 z-0 bg-cover bg-center"
         style={{
-          backgroundImage: "url(https://imgur.com/fSvWmgU.png)",
+          backgroundImage: "url(https://imgur.com/9NT8Cbi.png)",
           opacity: "0.1",
         }}
       />

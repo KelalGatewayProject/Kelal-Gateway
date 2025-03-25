@@ -10,22 +10,14 @@ import {
   Users,
   ArrowLeft,
 } from "lucide-react";
+import PageLayout from "@/components/PageLayout";
 
 const FullEvent: React.FC = () => {
   const [liked, setLiked] = useState(false);
   const navigate = useNavigate();
 
   return (
-    <div className="flex flex-col min-h-screen relative">
-      {/* Background Image with Opacity */}
-      <div
-        className="absolute inset-0 z-0 bg-cover bg-center"
-        style={{
-          backgroundImage: "url(https://imgur.com/fSvWmgU.png)",
-          opacity: "0.1",
-        }}
-      />
-
+    <PageLayout>
       {/* Event Image */}
       <div className="relative h-64 bg-gray-300">
         <img
@@ -151,7 +143,7 @@ const FullEvent: React.FC = () => {
           BUY TICKETS
         </Button>
       </div>
-    </div>
+    </PageLayout>
   );
 };
 

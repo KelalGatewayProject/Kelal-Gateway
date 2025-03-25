@@ -1,5 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { FacebookIcon, GoogleIcon } from "../components/SocialIcons";
+import { useAuth } from "../context/AuthContext";
 
 export default function RegisterDetails() {
   const [formData, setFormData] = useState({
@@ -12,6 +14,7 @@ export default function RegisterDetails() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const navigate = useNavigate();
+  const { login, updateUserProfile } = useAuth();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -23,14 +26,59 @@ export default function RegisterDetails() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    navigate("/register/profile");
+
+    // Validate password match
+    if (formData.password !== formData.confirmPassword) {
+      alert("Passwords do not match");
+      return;
+    }
+
+    // Save basic profile data
+    updateUserProfile({
+      name: formData.name,
+      email: formData.email,
+    });
+
+    // Navigate to profile setup
+    navigate("/profile-setup");
+  };
+
+  const handleSocialLogin = (provider: "facebook" | "google") => {
+    // In a real implementation, you would integrate with the respective social auth provider SDK
+    // For now, we'll simulate a successful login
+    console.log(`Logging in with ${provider}`);
+
+    // Simulate getting user data from social provider
+    const mockUserData = {
+      name: provider === "facebook" ? "Facebook User" : "Google User",
+      email: `${provider}.user@example.com`,
+    };
+
+    // Update form data with the social provider's data
+    setFormData({
+      ...formData,
+      name: mockUserData.name,
+      email: mockUserData.email,
+      password: "", // In a real implementation, you might generate a secure random password
+      confirmPassword: "",
+    });
+
+    // Save profile data from social login
+    updateUserProfile({
+      name: mockUserData.name,
+      email: mockUserData.email,
+    });
+
+    // In a production app, you would handle the OAuth flow properly
+    // For now, just navigate to the profile setup page
+    navigate("/profile-setup");
   };
 
   return (
-    <div className="flex flex-col items-center min-h-screen bg-white relative">
-      {/* Blue background with left-side curve */}
+    <div className="flex flex-col items-center min-h-screen relative">
+      {/* Background with left-side curve */}
       <div
-        className="absolute top-0 left-0 right-0 h-[250px] bg-[#0A1128] z-0"
+        className="absolute top-0 left-0 right-0 h-[200px] bg-[#0A1128] z-0"
         style={{
           borderBottomLeftRadius: "50%", // Curve only the left side
           borderBottomRightRadius: "0%", // No curve on the right side
@@ -38,7 +86,11 @@ export default function RegisterDetails() {
       >
         {/* Logo and text */}
         <div className="flex flex-col items-center justify-center h-full">
-          <img src="/logo.svg" alt="K'ELAL GATEWAY" className="w-24 h-24" />
+          <img
+            src="https://imgur.com/IblnJgd.png"
+            alt="KELAL GATEWAY"
+            className="w-24 h-24"
+          />
           <h1 className="text-xl font-bold text-center text-white mt-2">
             K'ELAL GATEWAY
           </h1>
@@ -46,10 +98,10 @@ export default function RegisterDetails() {
       </div>
 
       {/* Centered Form content */}
-      <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-md px-6 z-10">
+      <div className="absolute top-[57%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-md px-6 z-10">
         <form
           onSubmit={handleSubmit}
-          className="bg-white p-6 rounded-lg shadow-lg"
+          className="p-6 rounded-lg shadow-lg backdrop-blur-sm"
         >
           <div className="mb-4">
             <input
@@ -72,44 +124,45 @@ export default function RegisterDetails() {
               value={formData.email}
               onChange={handleChange}
               required
+              inputMode="email"
             />
           </div>
 
-          <div className="mb-4 relative">
+          <div className="mb-4 flex items-center gap-2">
             <input
               type={showPassword ? "text" : "password"}
               name="password"
               placeholder="PASSWORD"
-              className="w-full p-3 border border-gray-300 rounded-md"
+              className="flex-1 p-3 border border-gray-300 rounded-md"
               value={formData.password}
               onChange={handleChange}
               required
             />
             <button
               type="button"
-              className="absolute right-3 top-1/2 transform -translate-y-1/2"
+              className="p-2"
               onClick={() => setShowPassword(!showPassword)}
             >
-              {showPassword ? "👁️" : "🔒"}
+              👁️
             </button>
           </div>
 
-          <div className="mb-4 relative">
+          <div className="mb-4 flex items-center gap-2">
             <input
               type={showConfirmPassword ? "text" : "password"}
               name="confirmPassword"
               placeholder="CONFIRM PASSWORD"
-              className="w-full p-3 border border-gray-300 rounded-md"
+              className="flex-1 p-3 border border-gray-300 rounded-md"
               value={formData.confirmPassword}
               onChange={handleChange}
               required
             />
             <button
               type="button"
-              className="absolute right-3 top-1/2 transform -translate-y-1/2"
+              className="p-2"
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
             >
-              {showConfirmPassword ? "👁️" : "🔒"}
+              👁️
             </button>
           </div>
 
@@ -120,9 +173,37 @@ export default function RegisterDetails() {
             REGISTER & CONTINUE
           </button>
 
+          <div className="flex items-center my-4">
+            <div className="flex-grow h-px bg-gray-300"></div>
+            <span className="px-3 text-gray-500 text-sm">OR</span>
+            <div className="flex-grow h-px bg-gray-300"></div>
+          </div>
+
+          <div className="flex gap-4 mb-4">
+            <button
+              type="button"
+              onClick={() => handleSocialLogin("facebook")}
+              className="flex-1 flex items-center justify-center gap-2 bg-[#1877F2] text-white py-2 rounded-md font-bold"
+            >
+              <FacebookIcon className="w-5 h-5" />
+              Facebook
+            </button>
+            <button
+              type="button"
+              onClick={() => handleSocialLogin("google")}
+              className="flex-1 flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 py-2 rounded-md font-bold"
+            >
+              <GoogleIcon className="w-5 h-5" />
+              Google
+            </button>
+          </div>
+
+          {/* Split "Terms of Use" into two lines */}
           <p className="text-center text-xs mt-2">
-            BY CLICKING REGISTER, YOU AGREE TO OUR{" "}
-            <a href="/terms" className="font-bold">
+            BY CLICKING REGISTER, YOU AGREE TO OUR
+          </p>
+          <p className="text-center text-xs">
+            <a href="/terms" className="font-bold text-blue-600">
               TERMS OF USE
             </a>
           </p>
