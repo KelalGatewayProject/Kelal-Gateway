@@ -1,38 +1,55 @@
 import React, { useState } from "react";
-import { Button } from "./ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "./ui/tabs";
-import { QrCode, Ticket, Wine } from "lucide-react";
-import CheckInScanner from "./CheckInScanner";
+import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { QrCode, Ticket, Wine, Users, BarChart } from "lucide-react";
+import QRCodeScanner from "./QRCodeScanner";
+import TicketValidationSystem from "./TicketValidationSystem";
 
 interface StaffScannerInterfaceProps {
-  isOpen: boolean;
-  onClose: () => void;
-  staffMember: {
+  eventId?: string;
+  eventTitle?: string;
+  staffName?: string;
+  staffRole?: string;
+  staffMember?: {
     name: string;
     phone: string;
     position: string;
     permissions?: string[];
   };
-  eventId: string;
 }
 
 const StaffScannerInterface: React.FC<StaffScannerInterfaceProps> = ({
-  isOpen,
-  onClose,
-  staffMember,
-  eventId,
+  eventId = "event-123",
+  eventTitle = "Summer Music Festival",
+  staffName = "John Doe",
+  staffRole = "Event Staff",
+  staffMember = {
+    name: "John Doe",
+    phone: "+1234567890",
+    position: "Event Staff",
+    permissions: ["scan_tickets", "scan_drinks"],
+  },
 }) => {
   const [activeTab, setActiveTab] = useState<string>("overview");
   const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [scannerMode, setScannerMode] = useState<"tickets" | "drinks" | "all">(
     "tickets",
   );
+  const [stats, setStats] = useState({
+    totalScanned: 0,
+    validTickets: 0,
+    invalidTickets: 0,
+    alreadyUsedTickets: 0,
+  });
 
-  if (!isOpen) return null;
-
-  const permissions = staffMember.permissions || [];
-  const canScanTickets = permissions.includes("scan_tickets");
-  const canScanDrinks = permissions.includes("scan_drinks");
+  const handleTicketValidation = (ticketData: any, isValid: boolean) => {
+    setStats((prev) => ({
+      ...prev,
+      totalScanned: prev.totalScanned + 1,
+      validTickets: isValid ? prev.validTickets + 1 : prev.validTickets,
+      invalidTickets: !isValid ? prev.invalidTickets + 1 : prev.invalidTickets,
+    }));
+  };
 
   const handleScanSuccess = async (data: string): Promise<boolean> => {
     // In a real app, this would validate the QR code with a backend
@@ -46,6 +63,10 @@ const StaffScannerInterface: React.FC<StaffScannerInterfaceProps> = ({
     setScannerMode(mode);
     setIsScannerOpen(true);
   };
+
+  const permissions = staffMember.permissions || [];
+  const canScanTickets = permissions.includes("scan_tickets");
+  const canScanDrinks = permissions.includes("scan_drinks");
 
   return (
     <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center">
@@ -64,9 +85,10 @@ const StaffScannerInterface: React.FC<StaffScannerInterfaceProps> = ({
           className="w-full"
           onValueChange={setActiveTab}
         >
-          <TabsList className="grid w-full grid-cols-2 p-4">
+          <TabsList className="grid w-full grid-cols-3 p-4">
             <TabsTrigger value="overview">Overview</TabsTrigger>
             <TabsTrigger value="scan">Scan</TabsTrigger>
+            <TabsTrigger value="stats">Stats</TabsTrigger>
           </TabsList>
 
           <TabsContent value="overview" className="p-4">
@@ -119,6 +141,28 @@ const StaffScannerInterface: React.FC<StaffScannerInterfaceProps> = ({
                     <Wine className="h-4 w-4 mr-2" />
                     Scan Drinks
                   </Button>
+                </div>
+              </div>
+
+              <div className="p-3 border rounded-md">
+                <h4 className="font-medium mb-2">Event Information</h4>
+                <div className="space-y-1 text-sm">
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Event:</span>
+                    <span className="font-medium">{eventTitle}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Event ID:</span>
+                    <span className="font-medium">{eventId}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Staff:</span>
+                    <span className="font-medium">{staffMember.name}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-gray-500">Contact:</span>
+                    <span className="font-medium">{staffMember.phone}</span>
+                  </div>
                 </div>
               </div>
             </div>
@@ -180,10 +224,50 @@ const StaffScannerInterface: React.FC<StaffScannerInterfaceProps> = ({
               </div>
             </div>
           </TabsContent>
+
+          <TabsContent value="stats" className="p-4">
+            <div className="space-y-4">
+              <div className="grid grid-cols-2 gap-3">
+                <div className="bg-blue-50 p-3 rounded-lg text-center">
+                  <Users className="h-6 w-6 text-blue-500 mx-auto mb-1" />
+                  <p className="text-xl font-bold">{stats.totalScanned}</p>
+                  <p className="text-xs text-gray-500">Total Scanned</p>
+                </div>
+
+                <div className="bg-green-50 p-3 rounded-lg text-center">
+                  <Ticket className="h-6 w-6 text-green-500 mx-auto mb-1" />
+                  <p className="text-xl font-bold">{stats.validTickets}</p>
+                  <p className="text-xs text-gray-500">Valid Tickets</p>
+                </div>
+              </div>
+
+              <div className="p-3 border rounded-md">
+                <h4 className="font-medium mb-2">Scanning Activity</h4>
+                <div className="h-32 flex items-end justify-between gap-1">
+                  {[0.3, 0.5, 0.7, 0.4, 0.6, 0.8, 0.5].map((height, i) => (
+                    <div
+                      key={i}
+                      className="flex-1 bg-blue-200 rounded-t"
+                      style={{ height: `${height * 100}%` }}
+                    ></div>
+                  ))}
+                </div>
+                <div className="flex justify-between text-xs text-gray-500 mt-1">
+                  <span>Mon</span>
+                  <span>Tue</span>
+                  <span>Wed</span>
+                  <span>Thu</span>
+                  <span>Fri</span>
+                  <span>Sat</span>
+                  <span>Sun</span>
+                </div>
+              </div>
+            </div>
+          </TabsContent>
         </Tabs>
 
         <div className="p-4 border-t">
-          <Button onClick={onClose} className="w-full bg-[#0A1128]">
+          <Button onClick={() => {}} className="w-full bg-[#0A1128]">
             Close
           </Button>
         </div>
@@ -191,14 +275,12 @@ const StaffScannerInterface: React.FC<StaffScannerInterfaceProps> = ({
 
       {/* Scanner Component */}
       {isScannerOpen && (
-        <CheckInScanner
+        <QRCodeScanner
           isOpen={isScannerOpen}
           onClose={() => setIsScannerOpen(false)}
           onScanSuccess={handleScanSuccess}
-          eventId={eventId}
-          scanMode={scannerMode}
-          staffRole={staffMember.position}
-          staffPermissions={staffMember.permissions}
+          title={`Scan ${scannerMode === "tickets" ? "Ticket" : "Drink Voucher"}`}
+          description={`Position the ${scannerMode === "tickets" ? "ticket" : "drink voucher"} QR code within the frame`}
         />
       )}
     </div>

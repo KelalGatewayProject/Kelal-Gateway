@@ -1,76 +1,25 @@
 #!/bin/bash
 
-# Script to update private route table to route internet traffic through NAT Gateway
+# AWS Resource IDs from your environment
+VPC_ID="vpc-0208d4ec541c4cc4"
+PRIVATE_SUBNET_IDS=("subnet-06d23fd268afe27a9" "subnet-0768d2f6c1f5f4c53")
+PUBLIC_SUBNET_IDS=("subnet-06e4587ce9a89f80a" "subnet-02735e0c78222fe34")
+NAT_GATEWAY_IDS=("nat-0427e7a6797aa6e9b" "nat-05cad1ca2e1ab769a" "nat-01c78a32f08899a7")
 
-# Configuration
-NAT_GATEWAY_ID="nat-01c78ab32f08899a7"
-REGION="eu-north-1"
-
-# Check for AWS CLI
-if ! command -v aws &> /dev/null; then
-    echo "Error: AWS CLI is not installed. Please install it first."
-    exit 1
-fi
-
-# Check for AWS credentials
-if ! aws sts get-caller-identity &> /dev/null; then
-    echo "Error: AWS credentials not configured. Please run 'aws configure' first."
-    exit 1
-fi
-
-# Use the specific private route table ID
-echo "Using specified private route table..."
-PRIVATE_ROUTE_TABLES="rtb-01140cb50883e6f78" # ticketing-app-vpc-rtb-public
-
-if [ -z "$PRIVATE_ROUTE_TABLES" ]; then
-    echo "Error: Private route table ID is not set."
-    exit 1
-fi
-
-# Update each private route table
-for ROUTE_TABLE_ID in $PRIVATE_ROUTE_TABLES; do
-    echo "Updating route table $ROUTE_TABLE_ID to route internet traffic through NAT Gateway $NAT_GATEWAY_ID..."
-    
-    # Check if the route already exists
-    EXISTING_ROUTE=$(aws ec2 describe-route-tables \
-        --route-table-ids $ROUTE_TABLE_ID \
-        --query "RouteTables[0].Routes[?DestinationCidrBlock=='0.0.0.0/0']" \
-        --output text \
-        --region $REGION)
-    
-    if [ -n "$EXISTING_ROUTE" ]; then
-        echo "Route already exists. Replacing it..."
-        aws ec2 replace-route \
-            --route-table-id $ROUTE_TABLE_ID \
-            --destination-cidr-block 0.0.0.0/0 \
-            --nat-gateway-id $NAT_GATEWAY_ID \
-            --region $REGION
-    else
-        echo "Creating new route..."
-        aws ec2 create-route \
-            --route-table-id $ROUTE_TABLE_ID \
-            --destination-cidr-block 0.0.0.0/0 \
-            --nat-gateway-id $NAT_GATEWAY_ID \
-            --region $REGION
-    fi
-    
-    if [ $? -eq 0 ]; then
-        echo "Route table $ROUTE_TABLE_ID updated successfully."
-    else
-        echo "Error: Failed to update route table $ROUTE_TABLE_ID."
-        exit 1
-    fi
+# Create route tables for private subnets to route through NAT Gateway
+for subnet_id in "${PRIVATE_SUBNET_IDS[@]}"; do
+  # Create a new route table
+  route_table_id=$(aws ec2 create-route-table --vpc-id "$VPC_ID" --query 'RouteTable.RouteTableId' --output text)
+  echo "Created route table $route_table_id for subnet $subnet_id"
+  
+  # Associate the route table with the subnet
+  aws ec2 associate-route-table --route-table-id "$route_table_id" --subnet-id "$subnet_id"
+  echo "Associated route table $route_table_id with subnet $subnet_id"
+  
+  # Add a route to the internet through the NAT Gateway
+  # Using the first NAT Gateway for simplicity - in production you might want to use different NAT Gateways for different subnets
+  aws ec2 create-route --route-table-id "$route_table_id" --destination-cidr-block "0.0.0.0/0" --nat-gateway-id "${NAT_GATEWAY_IDS[0]}"
+  echo "Added route to the internet through NAT Gateway ${NAT_GATEWAY_IDS[0]} for route table $route_table_id"
 done
 
-# Verify the route tables
-echo "Verifying route tables..."
-for ROUTE_TABLE_ID in $PRIVATE_ROUTE_TABLES; do
-    echo "Routes for $ROUTE_TABLE_ID:"
-    aws ec2 describe-route-tables \
-        --route-table-ids $ROUTE_TABLE_ID \
-        --query "RouteTables[0].Routes" \
-        --output table \
-        --region $REGION
-done
-
-echo "Private route tables have been updated to route internet traffic through NAT Gateway $NAT_GATEWAY_ID."
+echo "Route tables updated successfully."

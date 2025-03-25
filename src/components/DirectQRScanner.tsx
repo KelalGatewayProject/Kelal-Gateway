@@ -3,9 +3,9 @@ import { Button } from "@/components/ui/button";
 import { Check, AlertCircle } from "lucide-react";
 
 interface DirectQRScannerProps {
-  staffName: string;
-  staffPosition: string;
-  eventName: string;
+  staffName?: string;
+  staffPosition?: string;
+  eventName?: string;
   scanResult?: {
     success: boolean;
     message: string;
