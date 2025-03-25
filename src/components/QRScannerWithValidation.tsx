@@ -1,12 +1,16 @@
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Check, AlertCircle, Camera } from "lucide-react";
+import { CheckCircle, XCircle, AlertTriangle } from "lucide-react";
 import QRCodeScanner from "./QRCodeScanner";
 
 interface QRScannerWithValidationProps {
-  staffName?: string;
-  staffPosition?: string;
-  eventName?: string;
+  onValidTicket?: (data: any) => void;
+  onInvalidTicket?: (data: any, reason: string) => void;
+  validationRules?: {
+    eventId?: string;
+    ticketType?: string[];
+    validateExpiration?: boolean;
+  };
   onScanComplete?: (result: {
     success: boolean;
     message: string;
@@ -15,96 +19,162 @@ interface QRScannerWithValidationProps {
   }) => void;
   validTickets?: string[];
   isDemo?: boolean;
+  staffName?: string;
+  staffPosition?: string;
+  eventName?: string;
 }
 
 const QRScannerWithValidation: React.FC<QRScannerWithValidationProps> = ({
+  onValidTicket = () => {},
+  onInvalidTicket = () => {},
+  validationRules = {},
+  onScanComplete,
+  validTickets = [],
+  isDemo = false,
   staffName = "John Doe",
   staffPosition = "Security",
   eventName = "Summer Music Festival",
-  onScanComplete,
-  validTickets = ["TICKET-123", "TICKET-456", "TICKET-789"],
-  isDemo = true,
 }) => {
-  const [scanning, setScanning] = useState(false);
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
   const [scanResult, setScanResult] = useState<{
-    success: boolean;
+    isValid: boolean;
+    data: any;
     message: string;
-    ticketId?: string;
-    ticketType?: string;
   } | null>(null);
-  const [cameraPermission, setCameraPermission] = useState<boolean | null>(
-    null,
-  );
 
-  // Check for camera permission
-  useEffect(() => {
-    if (!isDemo) {
-      navigator.mediaDevices
-        .getUserMedia({ video: true })
-        .then(() => setCameraPermission(true))
-        .catch(() => setCameraPermission(false));
-    } else {
-      // In demo mode, simulate camera permission
-      setCameraPermission(true);
+  const handleScanSuccess = (rawData: string) => {
+    try {
+      const data = JSON.parse(rawData);
+      let isValid = true;
+      let invalidReason = "";
+
+      // Validate ticket type
+      if (data.type !== "event_ticket") {
+        isValid = false;
+        invalidReason = "Invalid ticket format";
+      }
+
+      // Validate event ID if specified
+      if (
+        isValid &&
+        validationRules.eventId &&
+        data.eventId !== validationRules.eventId
+      ) {
+        isValid = false;
+        invalidReason = "Ticket is for a different event";
+      }
+
+      // Validate ticket type if specified
+      if (
+        isValid &&
+        validationRules.ticketType &&
+        validationRules.ticketType.length > 0 &&
+        data.ticketType &&
+        !validationRules.ticketType.includes(data.ticketType)
+      ) {
+        isValid = false;
+        invalidReason = `Invalid ticket type: ${data.ticketType}`;
+      }
+
+      // Validate expiration if needed
+      if (isValid && validationRules.validateExpiration && data.expiresAt) {
+        const expirationDate = new Date(data.expiresAt);
+        if (expirationDate < new Date()) {
+          isValid = false;
+          invalidReason = "Ticket has expired";
+        }
+      }
+
+      // Check if ticket is in valid tickets list (if provided)
+      if (isValid && validTickets.length > 0) {
+        const ticketId = data.ticketId || "";
+        if (!validTickets.includes(ticketId)) {
+          isValid = false;
+          invalidReason = "Ticket not found in the system";
+        }
+      }
+
+      setScanResult({
+        isValid,
+        data,
+        message: isValid ? "Valid ticket" : invalidReason,
+      });
+
+      // Call appropriate callback
+      if (isValid) {
+        onValidTicket(data);
+      } else {
+        onInvalidTicket(data, invalidReason);
+      }
+
+      // Call onScanComplete if provided
+      if (onScanComplete) {
+        onScanComplete({
+          success: isValid,
+          message: isValid ? "Valid ticket" : invalidReason,
+          ticketId: data.ticketId,
+          ticketType: data.ticketType,
+        });
+      }
+    } catch (error) {
+      setScanResult({
+        isValid: false,
+        data: null,
+        message: "Could not parse QR code data",
+      });
+      onInvalidTicket(null, "Invalid QR code format");
+
+      if (onScanComplete) {
+        onScanComplete({
+          success: false,
+          message: "Could not parse QR code data",
+        });
+      }
     }
-  }, [isDemo]);
+  };
 
-  const handleScanStart = () => {
-    setScanning(true);
+  const resetScan = () => {
     setScanResult(null);
   };
 
-  const handleScanStop = () => {
-    setScanning(false);
-  };
-
-  const handleScanSuccess = (data: string) => {
-    // Parse the QR code data
-    let ticketData;
-    try {
-      ticketData = JSON.parse(data);
-    } catch (e) {
-      // If not JSON, assume it's a ticket ID string
-      ticketData = { ticketId: data };
-    }
-
-    const ticketId = ticketData.ticketId || data;
-    const ticketType = ticketData.type || "standard";
-
-    // Validate the ticket
-    const isValid = validTickets.includes(ticketId);
-    const isTicketScan =
-      staffPosition === "Security" || staffPosition === "Hosts";
-
-    const result = {
-      success: isValid,
-      message: isValid
-        ? isTicketScan
-          ? "Ticket check-in successful!"
-          : "Drink voucher redeemed successfully!"
-        : isTicketScan
-          ? "Invalid ticket or already checked in"
-          : "Invalid drink voucher or already redeemed",
-      ticketId,
-      ticketType,
-    };
-
-    setScanResult(result);
-    setScanning(false);
-
-    if (onScanComplete) {
-      onScanComplete(result);
-    }
-  };
-
   const handleSimulateSuccess = () => {
-    const validTicketId =
-      validTickets[Math.floor(Math.random() * validTickets.length)];
-    handleScanSuccess(validTicketId);
+    if (validTickets.length > 0) {
+      const validTicketId =
+        validTickets[Math.floor(Math.random() * validTickets.length)];
+      handleScanSuccess(
+        JSON.stringify({
+          type: "event_ticket",
+          eventId: validationRules.eventId || "event-123",
+          userId: `user-${Math.floor(Math.random() * 1000)}`,
+          ticketId: validTicketId,
+          ticketType: "General Admission",
+          timestamp: new Date().toISOString(),
+        }),
+      );
+    } else {
+      handleScanSuccess(
+        JSON.stringify({
+          type: "event_ticket",
+          eventId: validationRules.eventId || "event-123",
+          userId: `user-${Math.floor(Math.random() * 1000)}`,
+          ticketId: `ticket-${Date.now()}`,
+          ticketType: "General Admission",
+          timestamp: new Date().toISOString(),
+        }),
+      );
+    }
   };
 
   const handleSimulateFailure = () => {
-    handleScanSuccess("INVALID-TICKET");
+    handleScanSuccess(
+      JSON.stringify({
+        type: "event_ticket",
+        eventId: "wrong-event-id",
+        userId: `user-${Math.floor(Math.random() * 1000)}`,
+        ticketId: "INVALID-TICKET",
+        timestamp: new Date().toISOString(),
+      }),
+    );
   };
 
   return (
@@ -128,34 +198,59 @@ const QRScannerWithValidation: React.FC<QRScannerWithValidationProps> = ({
           <p className="text-sm text-gray-600">Event: {eventName}</p>
         </div>
 
-        {cameraPermission === false && (
-          <div className="bg-red-50 border border-red-200 rounded-lg p-4 mb-4">
-            <div className="flex items-start">
-              <AlertCircle className="h-5 w-5 text-red-500 mt-0.5 mr-2" />
-              <div>
-                <h3 className="font-medium text-red-800">
-                  Camera Access Denied
-                </h3>
-                <p className="text-sm text-red-700">
-                  Please enable camera access in your browser settings to scan
-                  tickets.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
+        {scanResult ? (
+          <div className="space-y-4">
+            <div className="p-8 border rounded-lg">
+              {scanResult.isValid ? (
+                <CheckCircle className="h-16 w-16 text-green-500 mx-auto mb-4" />
+              ) : (
+                <XCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
+              )}
+              <p className="text-lg font-medium text-center mb-2">
+                {scanResult.isValid ? "Success!" : "Error"}
+              </p>
+              <p className="text-center mb-4">{scanResult.message}</p>
 
-        {!scanning && !scanResult && (
+              {scanResult.data && (
+                <div className="text-left p-4 bg-gray-50 rounded-lg">
+                  <p className="text-sm font-medium">Staff: {staffName}</p>
+                  <p className="text-sm font-medium">
+                    Position: {staffPosition}
+                  </p>
+                  <p className="text-sm font-medium">Event: {eventName}</p>
+                  {scanResult.data.ticketId && (
+                    <p className="text-sm font-medium">
+                      Ticket ID: {scanResult.data.ticketId}
+                    </p>
+                  )}
+                  {scanResult.data.ticketType && (
+                    <p className="text-sm font-medium">
+                      Type: {scanResult.data.ticketType}
+                    </p>
+                  )}
+                  <p className="text-sm font-medium">
+                    Time: {new Date().toLocaleTimeString()}
+                  </p>
+                </div>
+              )}
+            </div>
+
+            <Button onClick={resetScan} className="w-full bg-[#0A1128]">
+              Scan Another
+            </Button>
+          </div>
+        ) : (
           <div className="space-y-4">
             <div className="aspect-square w-full bg-gray-100 rounded-lg flex items-center justify-center">
-              <Camera className="h-16 w-16 text-gray-400" />
-              <p className="absolute text-sm text-gray-500">Camera inactive</p>
+              <div className="text-center">
+                <AlertTriangle className="h-16 w-16 text-gray-400 mx-auto mb-2" />
+                <p className="text-sm text-gray-500">Camera inactive</p>
+              </div>
             </div>
 
             <Button
-              onClick={handleScanStart}
+              onClick={() => setIsScannerOpen(true)}
               className="w-full bg-[#0A1128]"
-              disabled={cameraPermission === false}
             >
               Start Scanning
             </Button>
@@ -185,76 +280,15 @@ const QRScannerWithValidation: React.FC<QRScannerWithValidationProps> = ({
             )}
           </div>
         )}
-
-        {scanning && (
-          <div className="space-y-4">
-            <div className="aspect-square w-full bg-black overflow-hidden rounded-lg relative">
-              {isDemo ? (
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-3/4 h-3/4 border-2 border-green-500 rounded-lg animate-pulse" />
-                  <div className="absolute bottom-4 left-0 right-0 text-center">
-                    <p className="text-white bg-black/50 inline-block px-3 py-1 rounded-full text-sm">
-                      Scanning...
-                    </p>
-                  </div>
-                </div>
-              ) : (
-                <QRCodeScanner onScan={handleScanSuccess} />
-              )}
-            </div>
-
-            <Button
-              onClick={handleScanStop}
-              variant="outline"
-              className="w-full"
-            >
-              Cancel Scanning
-            </Button>
-          </div>
-        )}
-
-        {scanResult && (
-          <div className="space-y-4">
-            <div className="p-8 border rounded-lg">
-              {scanResult.success ? (
-                <Check className="h-16 w-16 text-green-500 mx-auto mb-4" />
-              ) : (
-                <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
-              )}
-              <p className="text-lg font-medium text-center mb-2">
-                {scanResult.success ? "Success!" : "Error"}
-              </p>
-              <p className="text-center mb-4">{scanResult.message}</p>
-
-              <div className="text-left p-4 bg-gray-50 rounded-lg">
-                <p className="text-sm font-medium">Staff: {staffName}</p>
-                <p className="text-sm font-medium">Position: {staffPosition}</p>
-                <p className="text-sm font-medium">Event: {eventName}</p>
-                {scanResult.ticketId && (
-                  <p className="text-sm font-medium">
-                    Ticket ID: {scanResult.ticketId}
-                  </p>
-                )}
-                {scanResult.ticketType && (
-                  <p className="text-sm font-medium">
-                    Type: {scanResult.ticketType}
-                  </p>
-                )}
-                <p className="text-sm font-medium">
-                  Time: {new Date().toLocaleTimeString()}
-                </p>
-              </div>
-            </div>
-
-            <Button
-              onClick={() => setScanResult(null)}
-              className="w-full bg-[#0A1128]"
-            >
-              Scan Another
-            </Button>
-          </div>
-        )}
       </div>
+
+      <QRCodeScanner
+        isOpen={isScannerOpen}
+        onClose={() => setIsScannerOpen(false)}
+        onScanSuccess={handleScanSuccess}
+        title="Scan Ticket QR Code"
+        description="Position the QR code within the frame to validate the ticket"
+      />
     </div>
   );
 };

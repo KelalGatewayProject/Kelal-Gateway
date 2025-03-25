@@ -1,278 +1,247 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Input } from "@/components/ui/input";
-import { Search, Check, X, Clock, QrCode, Ticket } from "lucide-react";
-import QRScannerWithValidation from "./QRScannerWithValidation";
-
-interface ValidatedTicket {
-  id: string;
-  name: string;
-  email: string;
-  ticketType: string;
-  checkInTime: string;
-  status: "checked-in" | "not-checked-in" | "invalid";
-}
+import QRCodeScanner from "./QRCodeScanner";
+import { CheckCircle, XCircle, Clock } from "lucide-react";
 
 interface TicketValidationSystemProps {
-  eventName?: string;
-  eventDate?: string;
-  staffName?: string;
-  staffPosition?: string;
-  initialTickets?: ValidatedTicket[];
+  eventId: string;
+  eventTitle?: string;
+  onValidateTicket?: (ticketData: any, isValid: boolean) => void;
 }
 
 const TicketValidationSystem: React.FC<TicketValidationSystemProps> = ({
-  eventName = "Summer Music Festival",
-  eventDate = "August 15, 2023",
-  staffName = "John Doe",
-  staffPosition = "Security",
-  initialTickets = [
-    {
-      id: "TICKET-123",
-      name: "Alice Johnson",
-      email: "alice@example.com",
-      ticketType: "VIP",
-      checkInTime: new Date(Date.now() - 1000 * 60 * 30).toISOString(),
-      status: "checked-in",
-    },
-    {
-      id: "TICKET-456",
-      name: "Bob Smith",
-      email: "bob@example.com",
-      ticketType: "General",
-      checkInTime: "",
-      status: "not-checked-in",
-    },
-    {
-      id: "TICKET-789",
-      name: "Charlie Brown",
-      email: "charlie@example.com",
-      ticketType: "VIP",
-      checkInTime: "",
-      status: "not-checked-in",
-    },
-  ],
+  eventId = "event-123",
+  eventTitle = "Summer Music Festival",
+  onValidateTicket = () => {},
 }) => {
-  const [tickets, setTickets] = useState<ValidatedTicket[]>(initialTickets);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [isScanning, setIsScanning] = useState(false);
-  const [stats, setStats] = useState({
-    checkedIn: initialTickets.filter((t) => t.status === "checked-in").length,
-    notCheckedIn: initialTickets.filter((t) => t.status === "not-checked-in")
-      .length,
-    total: initialTickets.length,
-  });
-
-  // Filter tickets based on search query
-  const filteredTickets = tickets.filter(
-    (ticket) =>
-      ticket.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      ticket.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      ticket.id.toLowerCase().includes(searchQuery.toLowerCase()),
-  );
-
-  // Group tickets by status
-  const checkedInTickets = filteredTickets.filter(
-    (t) => t.status === "checked-in",
-  );
-  const notCheckedInTickets = filteredTickets.filter(
-    (t) => t.status === "not-checked-in",
-  );
-
-  const handleCheckIn = (ticketId: string) => {
-    const updatedTickets = tickets.map((ticket) => {
-      if (ticket.id === ticketId && ticket.status === "not-checked-in") {
-        return {
-          ...ticket,
-          status: "checked-in" as const,
-          checkInTime: new Date().toISOString(),
-        };
-      }
-      return ticket;
-    });
-
-    setTickets(updatedTickets);
-    updateStats(updatedTickets);
-  };
-
-  const handleScanComplete = (result: {
-    success: boolean;
+  const [isScannerOpen, setIsScannerOpen] = useState(false);
+  const [scanResult, setScanResult] = useState<{
+    data: any;
+    status: "valid" | "invalid" | "used" | null;
     message: string;
-    ticketId?: string;
-  }) => {
-    if (result.success && result.ticketId) {
-      handleCheckIn(result.ticketId);
+  }>({ data: null, status: null, message: "" });
+  
+  // Mock database of scanned tickets (in a real app, this would be a server call)
+  const [scannedTickets, setScannedTickets] = useState<Record<string, boolean>>({});
+  const [scanHistory, setScanHistory] = useState<Array<{
+    ticketId: string;
+    timestamp: string;
+    status: "valid" | "invalid" | "used";
+  }>>([]);
+
+  const handleScanSuccess = (rawData: string) => {
+    try {
+      const data = JSON.parse(rawData);
+      
+      // Validate the ticket
+      if (data.type !== "event_ticket") {
+        setScanResult({
+          data,
+          status: "invalid",
+          message: "Invalid ticket type",
+        });
+        return;
+      }
+      
+      if (data.eventId !== eventId) {
+        setScanResult({
+          data,
+          status: "invalid",
+          message: "This ticket is for a different event",
+        });
+        return;
+      }
+      
+      // Check if ticket has been used before
+      if (scannedTickets[data.ticketId]) {
+        setScanResult({
+          data,
+          status: "used",
+          message: "This ticket has already been scanned",
+        });
+        return;
+      }
+      
+      // Valid ticket
+      setScannedTickets(prev => ({
+        ...prev,
+        [data.ticketId]: true
+      }));
+      
+      setScanResult({
+        data,
+        status: "valid",
+        message: "Ticket is valid",
+      });
+      
+      // Add to scan history
+      setScanHistory(prev => [
+        {
+          ticketId: data.ticketId,
+          timestamp: new Date().toISOString(),
+          status: "valid"
+        },
+        ...prev
+      ]);
+      
+      // Call the callback
+      onValidateTicket(data, true);
+      
+    } catch (error) {
+      setScanResult({
+        data: null,
+        status: "invalid",
+        message: "Could not parse QR code data",
+      });
+      onValidateTicket({}, false);
     }
-    setIsScanning(false);
   };
 
-  const updateStats = (updatedTickets: ValidatedTicket[]) => {
-    setStats({
-      checkedIn: updatedTickets.filter((t) => t.status === "checked-in").length,
-      notCheckedIn: updatedTickets.filter((t) => t.status === "not-checked-in")
-        .length,
-      total: updatedTickets.length,
+  const resetScan = () => {
+    setScanResult({
+      data: null,
+      status: null,
+      message: "",
     });
   };
 
   return (
-    <div className="bg-gray-50 min-h-screen pb-16">
-      {/* Header */}
-      <div className="bg-[#0A1128] text-white p-4">
-        <h1 className="text-xl font-bold">{eventName}</h1>
-        <p className="text-sm">{eventDate}</p>
-        <div className="flex items-center mt-2">
-          <div className="bg-white/20 rounded-full p-1 mr-2">
-            <Ticket className="h-4 w-4" />
-          </div>
-          <span className="text-sm">
-            {stats.checkedIn} / {stats.total} checked in
-          </span>
+    <div className="bg-gray-50 min-h-screen p-4">
+      <div className="max-w-md mx-auto">
+        <div className="bg-[#0A1128] text-white p-4 rounded-t-lg">
+          <h1 className="text-xl font-bold">{eventTitle}</h1>
+          <p className="text-sm">Ticket Validation System</p>
         </div>
-      </div>
-
-      {/* Main Content */}
-      <div className="p-4">
-        {isScanning ? (
-          <QRScannerWithValidation
-            staffName={staffName}
-            staffPosition={staffPosition}
-            eventName={eventName}
-            onScanComplete={handleScanComplete}
-            validTickets={tickets
-              .filter((t) => t.status === "not-checked-in")
-              .map((t) => t.id)}
-            isDemo={true}
-          />
-        ) : (
-          <>
-            {/* Search and Scan Button */}
-            <div className="mb-4">
-              <div className="flex items-center mb-2">
-                <Search className="h-4 w-4 mr-2 text-gray-500" />
-                <Input
-                  placeholder="Search by name, email, or ticket ID"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="flex-1"
-                />
+        
+        <div className="bg-white rounded-b-lg shadow-md p-4 mb-4">
+          <div className="text-center mb-6">
+            <div className="flex justify-between items-center mb-4">
+              <div>
+                <h2 className="text-lg font-semibold">Ticket Scanner</h2>
+                <p className="text-sm text-gray-500">Scan attendee tickets</p>
               </div>
-              <Button
-                onClick={() => setIsScanning(true)}
-                className="w-full bg-[#0A1128] mt-2"
-              >
-                <QrCode className="h-4 w-4 mr-2" />
-                Scan QR Code
-              </Button>
+              <div className="px-2 py-1 bg-gray-100 rounded-full text-sm">
+                {scanHistory.length} scanned
+              </div>
             </div>
-
-            {/* Ticket Tabs */}
-            <Tabs defaultValue="not-checked-in" className="w-full">
-              <TabsList className="grid w-full grid-cols-2 mb-4">
-                <TabsTrigger value="not-checked-in">
-                  Not Checked In ({stats.notCheckedIn})
-                </TabsTrigger>
-                <TabsTrigger value="checked-in">
-                  Checked In ({stats.checkedIn})
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent value="not-checked-in" className="space-y-4">
-                {notCheckedInTickets.length > 0 ? (
-                  <div className="space-y-3">
-                    {notCheckedInTickets.map((ticket) => (
-                      <div
-                        key={ticket.id}
-                        className="bg-white rounded-lg p-3 shadow-sm"
-                      >
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <h3 className="font-medium">{ticket.name}</h3>
-                            <p className="text-sm text-gray-500">
-                              {ticket.email}
-                            </p>
-                            <div className="flex items-center mt-1">
-                              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
-                                {ticket.ticketType}
-                              </span>
-                              <span className="text-xs text-gray-500 ml-2">
-                                {ticket.id}
-                              </span>
-                            </div>
-                          </div>
-                          <Button
-                            size="sm"
-                            onClick={() => handleCheckIn(ticket.id)}
-                            className="bg-green-600 hover:bg-green-700"
-                          >
-                            <Check className="h-4 w-4 mr-1" />
-                            Check In
-                          </Button>
-                        </div>
+            
+            {scanResult.status ? (
+              <div className="mb-6">
+                <div className="flex justify-center mb-4">
+                  {scanResult.status === "valid" ? (
+                    <div className="bg-green-100 p-6 rounded-full">
+                      <CheckCircle className="h-16 w-16 text-green-500" />
+                    </div>
+                  ) : scanResult.status === "used" ? (
+                    <div className="bg-amber-100 p-6 rounded-full">
+                      <Clock className="h-16 w-16 text-amber-500" />
+                    </div>
+                  ) : (
+                    <div className="bg-red-100 p-6 rounded-full">
+                      <XCircle className="h-16 w-16 text-red-500" />
+                    </div>
+                  )}
+                </div>
+                
+                <h3 className="text-xl font-bold mb-1">
+                  {scanResult.status === "valid"
+                    ? "Valid Ticket"
+                    : scanResult.status === "used"
+                    ? "Already Scanned"
+                    : "Invalid Ticket"}
+                </h3>
+                <p className="text-gray-600 mb-4">{scanResult.message}</p>
+                
+                {scanResult.data && (
+                  <div className="bg-gray-50 p-4 rounded-lg text-left mb-4">
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      <div>
+                        <p className="text-gray-500">Ticket ID:</p>
+                        <p className="font-medium">{scanResult.data.ticketId}</p>
                       </div>
-                    ))}
-                  </div>
-                ) : (
-                  <div className="text-center py-8 bg-white rounded-lg">
-                    <p className="text-gray-500">
-                      {searchQuery
-                        ? "No matching tickets found"
-                        : "All tickets have been checked in"}
-                    </p>
+                      <div>
+                        <p className="text-gray-500">Ticket Type:</p>
+                        <p className="font-medium">{scanResult.data.ticketType || "General Admission"}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500">User ID:</p>
+                        <p className="font-medium">{scanResult.data.userId}</p>
+                      </div>
+                      <div>
+                        <p className="text-gray-500">Timestamp:</p>
+                        <p className="font-medium">
+                          {new Date(scanResult.data.timestamp).toLocaleString()}
+                        </p>
+                      </div>
+                    </div>
                   </div>
                 )}
-              </TabsContent>
-
-              <TabsContent value="checked-in" className="space-y-4">
-                {checkedInTickets.length > 0 ? (
-                  <div className="space-y-3">
-                    {checkedInTickets.map((ticket) => (
-                      <div
-                        key={ticket.id}
-                        className="bg-white rounded-lg p-3 shadow-sm"
-                      >
-                        <div className="flex justify-between items-start">
-                          <div>
-                            <div className="flex items-center">
-                              <h3 className="font-medium">{ticket.name}</h3>
-                              <span className="ml-2 bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded-full flex items-center">
-                                <Check className="h-3 w-3 mr-1" />
-                                Checked In
-                              </span>
-                            </div>
-                            <p className="text-sm text-gray-500">
-                              {ticket.email}
-                            </p>
-                            <div className="flex items-center mt-1">
-                              <span className="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded">
-                                {ticket.ticketType}
-                              </span>
-                              <span className="text-xs text-gray-500 ml-2 flex items-center">
-                                <Clock className="h-3 w-3 mr-1" />
-                                {new Date(
-                                  ticket.checkInTime,
-                                ).toLocaleTimeString()}
-                              </span>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                
+                <Button
+                  onClick={resetScan}
+                  className="bg-[#0A1128] hover:bg-[#0A1128]/90 w-full"
+                >
+                  Scan Another Ticket
+                </Button>
+              </div>
+            ) : (
+              <Button
+                onClick={() => setIsScannerOpen(true)}
+                className="bg-[#0A1128] hover:bg-[#0A1128]/90 w-full"
+              >
+                Scan Ticket QR Code
+              </Button>
+            )}
+          </div>
+          
+          {scanHistory.length > 0 && (
+            <div>
+              <h3 className="font-semibold mb-2">Recent Scans</h3>
+              <div className="space-y-2 max-h-60 overflow-y-auto">
+                {scanHistory.map((scan, index) => (
+                  <div
+                    key={index}
+                    className="flex items-center p-2 bg-gray-50 rounded-lg"
+                  >
+                    {scan.status === "valid" ? (
+                      <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
+                    ) : scan.status === "used" ? (
+                      <Clock className="h-5 w-5 text-amber-500 mr-2" />
+                    ) : (
+                      <XCircle className="h-5 w-5 text-red-500 mr-2" />
+                    )}
+                    <div className="flex-1">
+                      <p className="text-sm font-medium truncate">{scan.ticketId}</p>
+                      <p className="text-xs text-gray-500">
+                        {new Date(scan.timestamp).toLocaleTimeString()}
+                      </p>
+                    </div>
+                    <div className="ml-2 text-xs px-2 py-0.5 rounded-full
+                      ${scan.status === "valid" ? "bg-green-100 text-green-800" :
+                      scan.status === "used" ? "bg-amber-100 text-amber-800" :
+                      "bg-red-100 text-red-800"}"
+                    >
+                      {scan.status === "valid"
+                        ? "Valid"
+                        : scan.status === "used"
+                        ? "Used"
+                        : "Invalid"}
+                    </div>
                   </div>
-                ) : (
-                  <div className="text-center py-8 bg-white rounded-lg">
-                    <p className="text-gray-500">
-                      {searchQuery
-                        ? "No matching tickets found"
-                        : "No tickets have been checked in yet"}
-                    </p>
-                  </div>
-                )}
-              </TabsContent>
-            </Tabs>
-          </>
-        )}
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+        
+        {/* QR Code Scanner Modal */}
+        <QRCodeScanner
+          isOpen={isScannerOpen}
+          onClose={() => setIsScannerOpen(false)}
+          onScanSuccess={handleScanSuccess}
+          title="Scan Ticket"
+          description="Position the QR code within the frame to validate the ticket"
+        />
       </div>
     </div>
   );

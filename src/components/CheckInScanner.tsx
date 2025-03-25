@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Camera, X, Check, AlertCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Html5Qrcode } from "html5-qrcode";
 
 interface CheckInScannerProps {
   isOpen: boolean;
@@ -27,108 +28,97 @@ const CheckInScanner: React.FC<CheckInScannerProps> = ({
     message: string;
     type?: string;
   } | null>(null);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const scannerRef = useRef<Html5Qrcode | null>(null);
+  const scannerContainerRef = useRef<HTMLDivElement>(null);
   const [hasCamera, setHasCamera] = useState(true);
 
-  // Start camera when scanner is opened
+  // Start scanner when component is opened
   useEffect(() => {
     if (isOpen) {
-      startCamera();
+      startScanner();
     } else {
-      stopCamera();
+      stopScanner();
     }
 
     return () => {
-      stopCamera();
+      stopScanner();
     };
   }, [isOpen]);
 
-  const startCamera = async () => {
+  const startScanner = async () => {
+    if (!scannerContainerRef.current) return;
+
     try {
-      const constraints = {
-        video: { facingMode: "environment" },
+      // Check if camera is available
+      await navigator.mediaDevices.getUserMedia({ video: true });
+      setHasCamera(true);
+      setScanResult(null);
+
+      // Create scanner instance if it doesn't exist
+      if (!scannerRef.current) {
+        scannerRef.current = new Html5Qrcode("checkin-qr-reader");
+      }
+
+      const qrCodeSuccessCallback = async (decodedText: string) => {
+        await handleScanComplete(decodedText);
       };
 
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
+      const config = {
+        fps: 10,
+        qrbox: { width: 250, height: 250 },
+        aspectRatio: 1,
+      };
 
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        setScanning(true);
-        setHasCamera(true);
-        scanQRCode();
-      }
+      await scannerRef.current.start(
+        { facingMode: "environment" },
+        config,
+        qrCodeSuccessCallback,
+        (errorMessage) => {
+          // QR code scanning error (not camera permission error)
+          console.log(errorMessage);
+        },
+      );
+
+      setScanning(true);
     } catch (error) {
       console.error("Error accessing camera:", error);
       setHasCamera(false);
     }
   };
 
-  const stopCamera = () => {
-    if (videoRef.current && videoRef.current.srcObject) {
-      const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
-      tracks.forEach((track) => track.stop());
-      videoRef.current.srcObject = null;
-    }
-    setScanning(false);
-  };
-
-  const scanQRCode = () => {
-    if (!scanning) return;
-
-    const video = videoRef.current;
-    const canvas = canvasRef.current;
-
-    if (!video || !canvas) return;
-
-    const context = canvas.getContext("2d");
-    if (!context) return;
-
-    // Only process if video is playing
-    if (video.readyState === video.HAVE_ENOUGH_DATA) {
-      canvas.height = video.videoHeight;
-      canvas.width = video.videoWidth;
-      context.drawImage(video, 0, 0, canvas.width, canvas.height);
-
-      // In a real app, you would use a QR code scanning library here
-      // For demo purposes, we'll simulate a successful scan after a delay
-      setTimeout(() => {
-        if (scanning) {
-          // Simulate QR code data based on scan mode
-          let qrType = scanMode === "drinks" ? "drink_voucher" : "event_ticket";
-
-          // Randomly generate drink voucher or ticket based on permissions
-          if (scanMode === "all" && Math.random() > 0.5) {
-            qrType = "drink_voucher";
-          }
-
-          const simulatedQRData = JSON.stringify({
-            type: qrType,
-            eventId: eventId,
-            userId: `user-${Math.floor(Math.random() * 1000)}`,
-            ticketId: `ticket-${Date.now()}`,
-            timestamp: new Date().toISOString(),
-          });
-
-          handleScanComplete(simulatedQRData);
-        }
-      }, 2000);
-    }
-
-    // Continue scanning
-    if (scanning) {
-      requestAnimationFrame(scanQRCode);
+  const stopScanner = () => {
+    if (scannerRef.current && scannerRef.current.isScanning) {
+      scannerRef.current
+        .stop()
+        .then(() => {
+          setScanning(false);
+        })
+        .catch((error) => {
+          console.error("Error stopping scanner:", error);
+        });
     }
   };
 
   const handleScanComplete = async (data: string) => {
-    setScanning(false);
-    stopCamera();
+    // Stop scanning
+    stopScanner();
 
     try {
-      // Parse the QR data
-      const qrData = JSON.parse(data);
-      const qrType = qrData.type;
+      // Try to parse the data as JSON
+      let qrData: any;
+      let qrType: string;
+
+      try {
+        qrData = JSON.parse(data);
+        qrType = qrData.type;
+      } catch (e) {
+        // If it's not valid JSON, show an error
+        setScanResult({
+          success: false,
+          message: "Invalid QR code format",
+        });
+        return;
+      }
 
       // Check if staff has permission to scan this type of QR code
       let hasPermission = false;
@@ -153,6 +143,16 @@ const CheckInScanner: React.FC<CheckInScannerProps> = ({
         setScanResult({
           success: false,
           message: `You don't have permission to scan ${qrType === "drink_voucher" ? "drink vouchers" : "tickets"}`,
+          type: qrType,
+        });
+        return;
+      }
+
+      // Verify the event ID matches
+      if (qrData.eventId !== eventId) {
+        setScanResult({
+          success: false,
+          message: `This ${qrType === "drink_voucher" ? "drink voucher" : "ticket"} is for a different event`,
           type: qrType,
         });
         return;
@@ -183,7 +183,7 @@ const CheckInScanner: React.FC<CheckInScannerProps> = ({
 
   const handleReset = () => {
     setScanResult(null);
-    startCamera();
+    startScanner();
   };
 
   if (!isOpen) return null;
@@ -214,7 +214,7 @@ const CheckInScanner: React.FC<CheckInScannerProps> = ({
             <div className="text-center p-8">
               <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
               <p>Camera access is required for scanning tickets.</p>
-              <Button onClick={startCamera} className="mt-4">
+              <Button onClick={startScanner} className="mt-4">
                 Try Again
               </Button>
             </div>
@@ -240,21 +240,17 @@ const CheckInScanner: React.FC<CheckInScannerProps> = ({
             </div>
           ) : (
             <div className="relative">
-              <div className="aspect-square w-full bg-black overflow-hidden rounded-lg relative">
-                <video
-                  ref={videoRef}
-                  className="absolute inset-0 w-full h-full object-cover"
-                  autoPlay
-                  playsInline
-                  muted
-                />
-                <canvas ref={canvasRef} className="hidden" />
+              <div
+                id="checkin-qr-reader"
+                ref={scannerContainerRef}
+                className="aspect-square w-full overflow-hidden rounded-lg relative"
+                style={{ background: "#000" }}
+              ></div>
 
-                {/* Scanning overlay */}
-                <div className="absolute inset-0 border-2 border-white/30 rounded-lg">
-                  <div className="absolute inset-0 flex items-center justify-center">
-                    <div className="w-3/4 h-3/4 border-2 border-green-500 rounded-lg animate-pulse" />
-                  </div>
+              {/* Scanning overlay - shown on top of the scanner */}
+              <div className="absolute inset-0 pointer-events-none">
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-3/4 h-3/4 border-2 border-green-500 rounded-lg animate-pulse" />
                 </div>
 
                 {scanning && (
