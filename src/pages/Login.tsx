@@ -1,93 +1,115 @@
-import React, { useState } from "react";
-import { Link } from "react-router-dom";
-import AuthLayout from "@/components/AuthLayout";
-import { Button } from "@/components/ui/button";
-import { InputWithIcon } from "@/components/ui/input-with-icon";
-import { Eye, EyeOff, Facebook, Mail } from "lucide-react";
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
 
-const Login: React.FC = () => {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+export default function Login() {
+  const [formData, setFormData] = useState({
+    email: "",
+    password: "",
+  });
   const [showPassword, setShowPassword] = useState(false);
+
+  const navigate = useNavigate();
+  const { login } = useAuth();
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle login
-    window.location.href = "/dashboard";
+
+    // Validate form
+    if (!formData.email || !formData.password) {
+      alert("Please enter both email and password");
+      return;
+    }
+
+    // Call login function from auth context
+    // For demo purposes, we'll default to attendee role
+    login(formData.email, formData.password, "attendee");
   };
 
   return (
-    <AuthLayout>
-      <div className="flex flex-col mt-8">
-        <h2 className="text-lg font-semibold mb-4 text-center">Welcome Back</h2>
-
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <InputWithIcon
-            type="email"
-            placeholder="Email Address"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            className="w-full bg-white shadow-sm border-gray-200 py-3"
-            icon={<Mail className="w-5 h-5 text-gray-500" />}
-            iconPosition="left"
-            autoComplete="email"
+    <div className="flex flex-col items-center min-h-screen relative">
+      {/* Blue background with left-side curve */}
+      <div
+        className="absolute top-0 left-0 right-0 h-[250px] bg-[#0A1128] z-0"
+        style={{
+          borderBottomLeftRadius: "50%", // Curve only the left side
+          borderBottomRightRadius: "0%", // No curve on the right side
+        }}
+      >
+        {/* Logo and text */}
+        <div className="flex flex-col items-center justify-center h-full">
+          <img
+            src="https://imgur.com/IblnJgd.png"
+            alt="KELAL GATEWAY"
+            className="w-24 h-24"
           />
-
-          <InputWithIcon
-            type={showPassword ? "text" : "password"}
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            className="w-full bg-white shadow-sm border-gray-200 py-3"
-            icon={
-              showPassword ? (
-                <Eye
-                  className="cursor-pointer text-gray-500"
-                  onClick={() => setShowPassword(false)}
-                />
-              ) : (
-                <EyeOff
-                  className="cursor-pointer text-gray-500"
-                  onClick={() => setShowPassword(true)}
-                />
-              )
-            }
-            autoComplete="current-password"
-          />
-
-          <div className="flex justify-end">
-            <Link to="/reset-password" className="text-sm text-blue-600">
-              Forgot password?
-            </Link>
-          </div>
-
-          <Button
-            type="submit"
-            className="w-full bg-[#0A1128] hover:bg-[#0A1128]/90 text-white py-6 mt-4 rounded-full"
-          >
-            Log In
-          </Button>
-        </form>
-
-        <div className="mt-8 flex flex-col items-center space-y-6">
-          <Button
-            variant="outline"
-            className="flex items-center space-x-2 w-full py-5 rounded-full"
-          >
-            <Facebook className="w-5 h-5 text-blue-600" />
-            <span>Continue with Facebook</span>
-          </Button>
-
-          <div className="flex items-center space-x-2">
-            <span className="text-gray-600">Don't have an account?</span>
-            <Link to="/phone-login" className="font-bold text-blue-600">
-              Sign Up
-            </Link>
-          </div>
+          <h1 className="text-xl font-bold text-center text-white mt-2">
+            K'ELAL GATEWAY
+          </h1>
         </div>
       </div>
-    </AuthLayout>
-  );
-};
 
-export default Login;
+      {/* Centered Form content */}
+      <div className="absolute top-[60%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-md px-6 z-10">
+        <form
+          onSubmit={handleSubmit}
+          className="p-6 rounded-lg shadow-lg backdrop-blur-sm bg-white/30" // Semi-transparent form background
+        >
+          <div className="mb-4">
+            <input
+              type="email"
+              name="email"
+              placeholder="EMAIL"
+              className="w-full p-3 border border-gray-300 rounded-md"
+              value={formData.email}
+              onChange={handleChange}
+              required
+              inputMode="email"
+            />
+          </div>
+
+          <div className="mb-4 relative">
+            <input
+              type={showPassword ? "text" : "password"}
+              name="password"
+              placeholder="PASSWORD"
+              className="w-full p-3 border border-gray-300 rounded-md"
+              value={formData.password}
+              onChange={handleChange}
+              required
+            />
+            <button
+              type="button"
+              className="absolute right-3 top-1/2 transform -translate-y-1/2"
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              {showPassword ? "👁️" : "🔒"}
+            </button>
+          </div>
+
+          <button
+            type="submit"
+            className="w-full bg-[#0A1128] text-white py-3 rounded-md font-bold mt-4"
+          >
+            LOGIN
+          </button>
+
+          <p className="text-center mt-4">
+            Don't have an account?{" "}
+            <a href="/register" className="font-bold text-blue-600">
+              Register
+            </a>
+          </p>
+        </form>
+      </div>
+    </div>
+  );
+}

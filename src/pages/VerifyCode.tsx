@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
-import AuthLayout from "@/components/AuthLayout";
+import { Link, useNavigate } from "react-router-dom";
+import AuthLayout from "../components/AuthLayout";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
 const VerifyCode: React.FC = () => {
   const [code, setCode] = useState("");
   const [timer, setTimer] = useState(60);
+  const navigate = useNavigate();
 
   useEffect(() => {
     const interval = setInterval(() => {
@@ -18,15 +19,16 @@ const VerifyCode: React.FC = () => {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle code verification
-    window.location.href = "/register";
+    // In a real app, we would verify the code with a backend
+    // For now, just navigate to register page
+    navigate("/register");
   };
 
   return (
     <AuthLayout>
       <div className="flex flex-col mt-8">
         <h2 className="text-lg font-semibold mb-4 text-center">
-          Verify Your Number
+          Enter the verification code
         </h2>
 
         <form onSubmit={handleSubmit} className="space-y-6">
@@ -35,6 +37,7 @@ const VerifyCode: React.FC = () => {
               <Input
                 key={index}
                 type="text"
+                inputMode="numeric"
                 value={code[index] || ""}
                 onChange={(e) => {
                   const newCode = code.split("");
@@ -49,7 +52,7 @@ const VerifyCode: React.FC = () => {
                     if (nextInput) nextInput.focus();
                   }
                 }}
-                className="w-12 h-12 text-center text-lg font-bold bg-white shadow-sm border-gray-200"
+                className="w-12 h-12 text-center text-lg font-bold shadow-sm border-gray-200"
                 maxLength={1}
                 name={`code-${index}`}
                 autoComplete="one-time-code"
@@ -67,7 +70,9 @@ const VerifyCode: React.FC = () => {
           >
             Verify Code
           </Button>
+        </form>
 
+        <div className="mt-8 flex flex-col items-center space-y-6">
           <div className="text-center">
             <p className="text-sm text-gray-500 mb-2">
               {timer > 0
@@ -81,19 +86,12 @@ const VerifyCode: React.FC = () => {
               disabled={timer > 0}
               onClick={() => {
                 setTimer(60);
-                window.location.href = "/phone-login";
+                // In a real app, this would trigger a new code to be sent
               }}
             >
               Resend Code
             </Button>
           </div>
-        </form>
-
-        <div className="mt-8 flex items-center justify-center space-x-2">
-          <span className="text-gray-600">Have an account?</span>
-          <Link to="/login" className="font-bold text-blue-600">
-            Log In
-          </Link>
         </div>
       </div>
     </AuthLayout>

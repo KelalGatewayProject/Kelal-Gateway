@@ -1,0 +1,75 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'AWS Backup Configuration for Mobile Ticketing System'
+
+Parameters:
+  ApplicationName:
+    Type: String
+    Default: mobile-ticketing-system
+    Description: Name of the application
+  
+  BackupRetentionDays:
+    Type: Number
+    Default: 30
+    Description: Number of days to retain backups
+
+Resources:
+  # Backup Vault
+  BackupVault:
+    Type: AWS::Backup::BackupVault
+    Properties:
+      BackupVaultName: !Sub "${ApplicationName}-vault"
+
+  # Backup Plan
+  BackupPlan:
+    Type: AWS::Backup::BackupPlan
+    Properties:
+      BackupPlan:
+        BackupPlanName: !Sub "${ApplicationName}-backup-plan"
+        BackupPlanRule:
+          - RuleName: "DailyBackups"
+            TargetBackupVault: !Ref BackupVault
+            ScheduleExpression: "cron(0 1 * * ? *)"
+            StartWindowMinutes: 60
+            CompletionWindowMinutes: 180
+            Lifecycle:
+              DeleteAfterDays: !Ref BackupRetentionDays
+
+  # IAM Role for AWS Backup
+  BackupRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: backup.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForBackup
+        - arn:aws:iam::aws:policy/service-role/AWSBackupServiceRolePolicyForRestores
+
+  # Backup Selection
+  BackupSelection:
+    Type: AWS::Backup::BackupSelection
+    Properties:
+      BackupPlanId: !Ref BackupPlan
+      BackupSelection:
+        SelectionName: !Sub "${ApplicationName}-backup-selection"
+        IamRoleArn: !GetAtt BackupRole.Arn
+        Resources:
+          - !Sub "arn:aws:rds:*:${AWS::AccountId}:db:${ApplicationName}-db"
+        # Add tags to select resources for backup
+        ListOfTags:
+          - ConditionType: STRINGEQUALS
+            ConditionKey: application
+            ConditionValue: !Ref ApplicationName
+
+Outputs:
+  BackupVaultName:
+    Description: Name of the backup vault
+    Value: !Ref BackupVault
+
+  BackupPlanId:
+    Description: ID of the backup plan
+    Value: !Ref BackupPlan
