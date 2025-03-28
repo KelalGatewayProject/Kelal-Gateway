@@ -1,199 +1,176 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import QRCodeScanner from "./QRCodeScanner";
 import { CheckCircle, XCircle, Clock } from "lucide-react";
+import QRCodeScanner from "./QRCodeScanner";
 
 interface TicketValidationSystemProps {
   eventId: string;
-  eventTitle?: string;
-  onValidateTicket?: (ticketData: any, isValid: boolean) => void;
+  eventName: string;
+  validTickets?: string[];
+  onValidate?: (result: {
+    success: boolean;
+    ticketId: string;
+    message: string;
+  }) => void;
+  staffName?: string;
+  staffPosition?: string;
+}
+
+type ScanStatus = "valid" | "invalid" | "used";
+
+interface ScanHistoryItem {
+  ticketId: string;
+  status: ScanStatus;
+  timestamp: string;
+  message: string;
 }
 
 const TicketValidationSystem: React.FC<TicketValidationSystemProps> = ({
-  eventId = "event-123",
-  eventTitle = "Summer Music Festival",
-  onValidateTicket = () => {},
+  eventId,
+  eventName,
+  validTickets = [],
+  onValidate,
+  staffName = "John Doe",
+  staffPosition = "Security",
 }) => {
   const [isScannerOpen, setIsScannerOpen] = useState(false);
-  const [scanResult, setScanResult] = useState<{
-    data: any;
-    status: "valid" | "invalid" | "used" | null;
-    message: string;
-  }>({ data: null, status: null, message: "" });
-  
-  // Mock database of scanned tickets (in a real app, this would be a server call)
-  const [scannedTickets, setScannedTickets] = useState<Record<string, boolean>>({});
-  const [scanHistory, setScanHistory] = useState<Array<{
-    ticketId: string;
-    timestamp: string;
-    status: "valid" | "invalid" | "used";
-  }>>([]);
+  const [scanHistory, setScanHistory] = useState<ScanHistoryItem[]>([]);
+  const [usedTickets, setUsedTickets] = useState<Set<string>>(new Set());
 
-  const handleScanSuccess = (rawData: string) => {
+  const handleScanSuccess = async (data: string): Promise<boolean> => {
     try {
-      const data = JSON.parse(rawData);
-      
+      // Parse the QR code data
+      const ticketData = JSON.parse(data);
+
       // Validate the ticket
-      if (data.type !== "event_ticket") {
-        setScanResult({
-          data,
-          status: "invalid",
-          message: "Invalid ticket type",
-        });
-        return;
+      let isValid = false;
+      let status: ScanStatus = "invalid";
+      let message = "Invalid ticket";
+
+      // Check if this is a valid ticket format
+      if (ticketData.type === "event_ticket") {
+        // Check if the ticket is for this event
+        if (ticketData.eventId === eventId) {
+          const ticketId = ticketData.ticketId || "";
+
+          // Check if the ticket has already been used
+          if (usedTickets.has(ticketId)) {
+            status = "used";
+            message = "Ticket already checked in";
+          }
+          // If validTickets array is provided, check if the ticket is in the list
+          else if (validTickets.length > 0) {
+            if (validTickets.includes(ticketId)) {
+              isValid = true;
+              status = "valid";
+              message = "Valid ticket";
+              // Mark the ticket as used
+              setUsedTickets((prev) => new Set([...prev, ticketId]));
+            } else {
+              message = "Ticket not found in the system";
+            }
+          } else {
+            // If no validTickets array is provided, assume it's valid
+            isValid = true;
+            status = "valid";
+            message = "Valid ticket";
+            // Mark the ticket as used
+            if (ticketId) {
+              setUsedTickets((prev) => new Set([...prev, ticketId]));
+            }
+          }
+        } else {
+          message = "Ticket is for a different event";
+        }
       }
-      
-      if (data.eventId !== eventId) {
-        setScanResult({
-          data,
-          status: "invalid",
-          message: "This ticket is for a different event",
-        });
-        return;
-      }
-      
-      // Check if ticket has been used before
-      if (scannedTickets[data.ticketId]) {
-        setScanResult({
-          data,
-          status: "used",
-          message: "This ticket has already been scanned",
-        });
-        return;
-      }
-      
-      // Valid ticket
-      setScannedTickets(prev => ({
-        ...prev,
-        [data.ticketId]: true
-      }));
-      
-      setScanResult({
-        data,
-        status: "valid",
-        message: "Ticket is valid",
-      });
-      
+
       // Add to scan history
-      setScanHistory(prev => [
-        {
-          ticketId: data.ticketId,
-          timestamp: new Date().toISOString(),
-          status: "valid"
-        },
-        ...prev
-      ]);
-      
-      // Call the callback
-      onValidateTicket(data, true);
-      
+      const historyItem: ScanHistoryItem = {
+        ticketId: ticketData.ticketId || "Unknown",
+        status,
+        timestamp: new Date().toISOString(),
+        message,
+      };
+
+      setScanHistory((prev) => [historyItem, ...prev]);
+
+      // Call the onValidate callback if provided
+      if (onValidate) {
+        onValidate({
+          success: isValid,
+          ticketId: ticketData.ticketId || "Unknown",
+          message,
+        });
+      }
+
+      return true; // Return true to close the scanner
     } catch (error) {
-      setScanResult({
-        data: null,
+      console.error("Error processing scan:", error);
+
+      // Add to scan history
+      const historyItem: ScanHistoryItem = {
+        ticketId: "Unknown",
         status: "invalid",
-        message: "Could not parse QR code data",
-      });
-      onValidateTicket({}, false);
+        timestamp: new Date().toISOString(),
+        message: "Invalid QR code format",
+      };
+
+      setScanHistory((prev) => [historyItem, ...prev]);
+
+      if (onValidate) {
+        onValidate({
+          success: false,
+          ticketId: "Unknown",
+          message: "Invalid QR code format",
+        });
+      }
+
+      return true; // Return true to close the scanner
     }
   };
 
-  const resetScan = () => {
-    setScanResult({
-      data: null,
-      status: null,
-      message: "",
-    });
-  };
-
   return (
-    <div className="bg-gray-50 min-h-screen p-4">
-      <div className="max-w-md mx-auto">
-        <div className="bg-[#0A1128] text-white p-4 rounded-t-lg">
-          <h1 className="text-xl font-bold">{eventTitle}</h1>
-          <p className="text-sm">Ticket Validation System</p>
-        </div>
-        
-        <div className="bg-white rounded-b-lg shadow-md p-4 mb-4">
-          <div className="text-center mb-6">
-            <div className="flex justify-between items-center mb-4">
-              <div>
-                <h2 className="text-lg font-semibold">Ticket Scanner</h2>
-                <p className="text-sm text-gray-500">Scan attendee tickets</p>
-              </div>
-              <div className="px-2 py-1 bg-gray-100 rounded-full text-sm">
-                {scanHistory.length} scanned
-              </div>
+    <div className="bg-white min-h-screen">
+      {/* Header */}
+      <div className="bg-[#0A1128] text-white p-4">
+        <h1 className="text-xl font-bold">{eventName}</h1>
+        <p className="text-sm">
+          {staffName} - {staffPosition}
+        </p>
+      </div>
+
+      <div className="p-4">
+        <div className="space-y-4">
+          {/* Stats */}
+          <div className="grid grid-cols-3 gap-3">
+            <div className="bg-blue-50 p-3 rounded-lg text-center">
+              <p className="text-xl font-bold">{scanHistory.length}</p>
+              <p className="text-xs text-gray-500">Total Scans</p>
             </div>
-            
-            {scanResult.status ? (
-              <div className="mb-6">
-                <div className="flex justify-center mb-4">
-                  {scanResult.status === "valid" ? (
-                    <div className="bg-green-100 p-6 rounded-full">
-                      <CheckCircle className="h-16 w-16 text-green-500" />
-                    </div>
-                  ) : scanResult.status === "used" ? (
-                    <div className="bg-amber-100 p-6 rounded-full">
-                      <Clock className="h-16 w-16 text-amber-500" />
-                    </div>
-                  ) : (
-                    <div className="bg-red-100 p-6 rounded-full">
-                      <XCircle className="h-16 w-16 text-red-500" />
-                    </div>
-                  )}
-                </div>
-                
-                <h3 className="text-xl font-bold mb-1">
-                  {scanResult.status === "valid"
-                    ? "Valid Ticket"
-                    : scanResult.status === "used"
-                    ? "Already Scanned"
-                    : "Invalid Ticket"}
-                </h3>
-                <p className="text-gray-600 mb-4">{scanResult.message}</p>
-                
-                {scanResult.data && (
-                  <div className="bg-gray-50 p-4 rounded-lg text-left mb-4">
-                    <div className="grid grid-cols-2 gap-2 text-sm">
-                      <div>
-                        <p className="text-gray-500">Ticket ID:</p>
-                        <p className="font-medium">{scanResult.data.ticketId}</p>
-                      </div>
-                      <div>
-                        <p className="text-gray-500">Ticket Type:</p>
-                        <p className="font-medium">{scanResult.data.ticketType || "General Admission"}</p>
-                      </div>
-                      <div>
-                        <p className="text-gray-500">User ID:</p>
-                        <p className="font-medium">{scanResult.data.userId}</p>
-                      </div>
-                      <div>
-                        <p className="text-gray-500">Timestamp:</p>
-                        <p className="font-medium">
-                          {new Date(scanResult.data.timestamp).toLocaleString()}
-                        </p>
-                      </div>
-                    </div>
-                  </div>
-                )}
-                
-                <Button
-                  onClick={resetScan}
-                  className="bg-[#0A1128] hover:bg-[#0A1128]/90 w-full"
-                >
-                  Scan Another Ticket
-                </Button>
-              </div>
-            ) : (
-              <Button
-                onClick={() => setIsScannerOpen(true)}
-                className="bg-[#0A1128] hover:bg-[#0A1128]/90 w-full"
-              >
-                Scan Ticket QR Code
-              </Button>
-            )}
+            <div className="bg-green-50 p-3 rounded-lg text-center">
+              <p className="text-xl font-bold">
+                {scanHistory.filter((scan) => scan.status === "valid").length}
+              </p>
+              <p className="text-xs text-gray-500">Valid</p>
+            </div>
+            <div className="bg-red-50 p-3 rounded-lg text-center">
+              <p className="text-xl font-bold">
+                {scanHistory.filter((scan) => scan.status === "invalid").length}
+              </p>
+              <p className="text-xs text-gray-500">Invalid</p>
+            </div>
           </div>
-          
+
+          {/* Scan Button */}
+          <div>
+            <Button
+              onClick={() => setIsScannerOpen(true)}
+              className="w-full bg-[#0A1128] py-6 text-lg font-bold rounded-lg shadow-md hover:bg-[#0A1128]/90 w-full"
+            >
+              Scan Ticket QR Code
+            </Button>
+          </div>
+
           {scanHistory.length > 0 && (
             <div>
               <h3 className="font-semibold mb-2">Recent Scans</h3>
@@ -211,21 +188,21 @@ const TicketValidationSystem: React.FC<TicketValidationSystemProps> = ({
                       <XCircle className="h-5 w-5 text-red-500 mr-2" />
                     )}
                     <div className="flex-1">
-                      <p className="text-sm font-medium truncate">{scan.ticketId}</p>
+                      <p className="text-sm font-medium truncate">
+                        {scan.ticketId}
+                      </p>
                       <p className="text-xs text-gray-500">
                         {new Date(scan.timestamp).toLocaleTimeString()}
                       </p>
                     </div>
-                    <div className="ml-2 text-xs px-2 py-0.5 rounded-full
-                      ${scan.status === "valid" ? "bg-green-100 text-green-800" :
-                      scan.status === "used" ? "bg-amber-100 text-amber-800" :
-                      "bg-red-100 text-red-800"}"
+                    <div
+                      className={`ml-2 text-xs px-2 py-0.5 rounded-full ${scan.status === "valid" ? "bg-green-100 text-green-800" : scan.status === "used" ? "bg-amber-100 text-amber-800" : "bg-red-100 text-red-800"}`}
                     >
                       {scan.status === "valid"
                         ? "Valid"
                         : scan.status === "used"
-                        ? "Used"
-                        : "Invalid"}
+                          ? "Used"
+                          : "Invalid"}
                     </div>
                   </div>
                 ))}
@@ -233,7 +210,7 @@ const TicketValidationSystem: React.FC<TicketValidationSystemProps> = ({
             </div>
           )}
         </div>
-        
+
         {/* QR Code Scanner Modal */}
         <QRCodeScanner
           isOpen={isScannerOpen}

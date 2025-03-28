@@ -1,4 +1,4 @@
-# Mobile Ticketing System
+# Kelal Gateway - Mobile Ticketing System
 
 A comprehensive mobile application that allows event organizers to create events, sell tickets, and validate attendees through QR code scanning, while providing attendees with a seamless ticket purchasing and event check-in experience.
 
@@ -10,147 +10,67 @@ A comprehensive mobile application that allows event organizers to create events
 - **Scanner Interface** - Camera-based QR scanner for event staff to quickly validate tickets
 - **Attendee Management** - Track check-ins, manage guest lists, and view attendance analytics
 
-## Architecture
-
-The Mobile Ticketing System is deployed on AWS with the following components:
-
-- **VPC** with public and private subnets across multiple availability zones
-- **NAT Gateway** for private subnet internet access
-- **Security Groups** for web, app, and database tiers
-- **Elastic Beanstalk** for application deployment
-- **RDS PostgreSQL** for database
-- **CloudWatch** for monitoring and alarms
-- **AWS Backup** for database backups
-
-## Prerequisites
-
-- AWS Account with appropriate permissions
-- AWS CLI installed and configured
-- Node.js 18 or later
-- Git
-- Elastic Beanstalk CLI (eb-cli)
-
 ## Getting Started
 
-### Clone the Repository
+For detailed setup instructions, please refer to [COMPLETE_SETUP.md](COMPLETE_SETUP.md).
+
+For deployment instructions, please refer to [DEPLOYMENT.md](DEPLOYMENT.md).
+
+### Quick Start
 
 ```bash
-git clone https://github.com/yourusername/mobile-ticketing-system.git
-cd mobile-ticketing-system
-```
+# Clone the repository
+git clone https://github.com/KelalGatewayProject/Kelal-Gateway.git
+cd Kelal-Gateway
 
-### Install Dependencies
-
-```bash
+# Install dependencies
 npm install
-```
 
-### Configure AWS CLI
+# Set up environment variables (see COMPLETE_SETUP.md)
 
-```bash
-aws configure
-```
-
-### Initialize Elastic Beanstalk
-
-```bash
-eb init mobile-ticketing-system --platform node.js --region eu-north-1
-```
-
-## Deployment
-
-### Option 1: Automated Deployment
-
-Use the master deployment script to deploy the entire infrastructure and application:
-
-```bash
-./deploy.sh
-```
-
-This script will:
-1. Deploy the infrastructure using CloudFormation
-2. Deploy monitoring configuration
-3. Deploy backup configuration
-4. Build the application
-5. Deploy the application to Elastic Beanstalk
-6. Initialize the database (optional)
-7. Load sample data (optional)
-
-### Option 2: Manual Deployment
-
-#### 1. Deploy Infrastructure
-
-```bash
-cd infrastructure
-./deploy-stack.sh
-```
-
-#### 2. Deploy Monitoring
-
-```bash
-cd infrastructure
-./deploy-monitoring.sh
-```
-
-#### 3. Deploy Backup
-
-```bash
-cd infrastructure
-./deploy-backup.sh
-```
-
-#### 4. Build and Deploy Application
-
-```bash
-npm ci
-npm run build
-eb deploy
-```
-
-#### 5. Initialize Database
-
-```bash
-cd infrastructure
-./init-db.sh
-```
-
-#### 6. Load Sample Data (Optional)
-
-```bash
-cd infrastructure
-./load-sample-data.sh
-```
-
-## Local Development
-
-### Start Development Server
-
-```bash
+# Start development server
 npm run dev
 ```
 
-### Using Docker Compose
+## Project Structure
 
-```bash
-docker-compose up
+```
+├── backend/             # Backend server code
+│   ├── middleware/      # Express middleware
+│   ├── models/          # MongoDB models
+│   ├── routes/          # API routes
+│   ├── utils/           # Utility functions
+│   └── server.js        # Server entry point
+├── public/              # Static assets
+├── src/                 # Frontend React code
+│   ├── components/      # Reusable components
+│   ├── context/         # React context providers
+│   ├── lib/             # Utility libraries
+│   ├── pages/           # Page components
+│   └── App.tsx          # Main application component
+└── infrastructure/      # Deployment and infrastructure code
 ```
 
-This will start the application and a PostgreSQL database.
+## User Roles
 
-## Cleanup
+The application supports the following user roles:
 
-To delete all resources created for the Mobile Ticketing System:
+- **Admin**: Full access to all features, including user management and event approval
+- **Organizer**: Can create and manage events, staff, and view reports
+- **Member**: Regular users who can browse events and purchase tickets
+- **Attendee**: Users who have purchased tickets to events
 
-```bash
-./cleanup.sh
-```
+## Technologies Used
 
-**WARNING**: This action is irreversible and will result in data loss!
+- **Frontend**: React, TypeScript, Tailwind CSS, ShadCN UI
+- **Backend**: Node.js, Express, MongoDB
+- **Authentication**: JWT, Phone verification via Twilio
+- **QR Code**: html5-qrcode for scanning, custom QR generation
+- **Maps**: Leaflet, OpenStreetMap
 
-## Documentation
+## Contributing
 
-- [Deployment Guide](DEPLOYMENT.md) - Detailed deployment instructions
-- [Infrastructure Setup](src/infrastructure/network-setup.md) - Network infrastructure setup details
+Contributions are welcome! Please feel free to submit a Pull Request.
 
 ## License
 

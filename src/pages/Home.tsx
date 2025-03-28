@@ -308,7 +308,7 @@ const Home: React.FC = () => {
     return (
       <div className="flex-1 pb-16">
         {/* Newly Added Events */}
-        <div className="px-3 pt-2">
+        <div className="px-3 pt-0">
           <h2 className="text-lg font-bold mb-4">NEWLY ADDED EVENTS</h2>
           {/* Event List */}
           <div className="space-y-4">
@@ -341,31 +341,20 @@ const Home: React.FC = () => {
                 <React.Fragment key={event.id}>
                   {index === 2 && (
                     /* Sponsored Ad after the second event */
-                    <div className="bg-red-600 text-white p-2 rounded-lg shadow-md">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <span className="text-xs">SPONSORED</span>
-                          <div className="flex items-center">
-                            <span className="text-sm font-bold">
-                              The Gift That MAKES AN ENTRANCE
-                            </span>
-                            <img
-                              src="https://images.unsplash.com/photo-1569529465841-dfecdab7503b?w=100&q=80"
-                              alt="Johnnie Walker"
-                              className="h-10 ml-2"
-                            />
-                          </div>
-                        </div>
-                        <button className="bg-black text-white text-xs px-2 py-1 rounded">
-                          DISCOVER MORE
-                        </button>
+                    <div className="bg-transparent mb-0">
+                      <div className="flex justify-center mx-auto">
+                        <span className="text-xs text-gray-500 uppercase tracking-wider">
+                          SPONSORED
+                        </span>
+                        <img
+                          src="https://imgur.com/A8mPpar.png"
+                          alt="St.George Beer"
+                          className="h-25 object-contain"
+                        />
                       </div>
                     </div>
                   )}
-                  <div
-                    className="mb-4"
-                    onClick={() => navigate(`/event/${event.id}`)}
-                  >
+                  <div onClick={() => navigate(`/event/${event.id}`)}>
                     <EventCard
                       image={event.image}
                       title={event.title}
@@ -396,31 +385,20 @@ const Home: React.FC = () => {
                 <React.Fragment key={event.id}>
                   {index === 2 && (
                     /* Sponsored Ad after the second event */
-                    <div className="bg-red-600 text-white p-2 rounded-lg shadow-md">
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <span className="text-xs">SPONSORED</span>
-                          <div className="flex items-center">
-                            <span className="text-sm font-bold">
-                              The Gift That MAKES AN ENTRANCE
-                            </span>
-                            <img
-                              src="https://images.unsplash.com/photo-1569529465841-dfecdab7503b?w=100&q=80"
-                              alt="Johnnie Walker"
-                              className="h-10 ml-2"
-                            />
-                          </div>
-                        </div>
-                        <button className="bg-black text-white text-xs px-2 py-1 rounded">
-                          DISCOVER MORE
-                        </button>
+                    <div className="bg-transparent mb-0">
+                      <div className="flex justify-center mx-auto">
+                        <span className="text-xs text-gray-500 uppercase tracking-wider absolute left-0 top-0">
+                          SPONSORED
+                        </span>
+                        <img
+                          src="https://imgur.com/A8mPpar.png"
+                          alt="St.George Beer"
+                          className="h-25 object-contain"
+                        />
                       </div>
                     </div>
                   )}
-                  <div
-                    className="mb-4"
-                    onClick={() => navigate(`/event/${event.id}`)}
-                  >
+                  <div onClick={() => navigate(`/event/${event.id}`)}>
                     <EventCard
                       image={event.image}
                       title={event.title}
@@ -591,9 +569,9 @@ const Home: React.FC = () => {
               ].map((organizer, index) => (
                 <div
                   key={index}
-                  className="flex flex-col items-center w-[111px] h-[170px] bg-white p-2 rounded-lg border border-gray-200 shadow-md flex-shrink-0 cursor-pointer"
+                  className="flex flex-col items-center w-[111px] h-[170px] bg-white p-2 rounded-lg border border-gray-200 flex-shrink-0 cursor-pointer"
                   style={{
-                    boxShadow: "0 9px 6px rgba(0, 0, 0, 0.1)",
+                    boxShadow: "0 0px 0px rgba(0, 0, 0, 0.1)",
                   }}
                   onClick={() =>
                     console.log(`Clicked on organizer: ${organizer.name}`)
@@ -653,7 +631,7 @@ const Home: React.FC = () => {
         </div>
 
         {/* Copyright Text */}
-        <div className="text-center text-xs text-gray-500 my-6">
+        <div className="text-center text-xs text-gray-500 pb-0">
           © Copyright 2025 KELAL GATEWAY
         </div>
       </div>
@@ -675,9 +653,12 @@ const Home: React.FC = () => {
 
       {/* Header Sections - Only show for non-organizers */}
       {userRole !== "organizer" && (
-        <div className="sticky top-[57px] left-0 right-0 z-10 bg-[#fefdfb]">
+        <div className="sticky top-[57px] left-0 right-0 z-10 bg-[#fefdfb] shadow-sm">
+          {/* Small shadow to cover any potential gap */}
+          <div className="absolute -top-1 left-0 right-0 h-1 bg-[#fefdfb]"></div>
+
           {/* Categories Section */}
-          <section className="border-b border-gray-200 w-full">
+          <section className="border-b border-gray-200 w-full pt-1">
             <div className="flex overflow-x-auto p-3 gap-2 scrollbar-hide w-full">
               <CategoryButton to="/category/ALL%20EVENTS" label="All Events" />
               <CategoryButton
@@ -716,8 +697,9 @@ const Home: React.FC = () => {
       )}
 
       {/* Main Content - Conditionally render based on user role */}
-      <main className="flex-1 overflow-y-auto">
-        <div className={userRole === "organizer" ? "pt-2 pb-16" : "pt-2 pb-16"}>
+      <main className="flex-1 overflow-y-auto relative z-0 mt-[85px]">
+        {/* Added mt-[115px] to push content down */}
+        <div className={userRole === "organizer" ? "pt-2 pb-10" : "pb-10"}>
           {renderContent()}
         </div>
       </main>

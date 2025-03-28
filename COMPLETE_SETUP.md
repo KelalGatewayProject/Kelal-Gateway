@@ -4,17 +4,17 @@ This document provides a comprehensive step-by-step guide to set up the entire M
 
 ## Prerequisites
 
-- AWS Account with appropriate permissions
-- AWS CLI installed and configured
 - Node.js 18 or later
 - Git
-- Elastic Beanstalk CLI (eb-cli)
+- MongoDB account
+- Twilio account (for SMS verification)
+- Email service provider (for email notifications)
 
 ## Step 1: Clone the Repository
 
 ```bash
-git clone https://github.com/yourusername/mobile-ticketing-system.git
-cd mobile-ticketing-system
+git clone https://github.com/KelalGatewayProject/Kelal-Gateway.git
+cd Kelal-Gateway
 ```
 
 ## Step 2: Install Dependencies
@@ -23,202 +23,135 @@ cd mobile-ticketing-system
 npm install
 ```
 
-## Step 3: Configure AWS CLI
+## Step 3: Set Up Environment Variables
 
-```bash
-aws configure
+Create a `.env` file in the root directory with the following variables:
+
+```
+MONGODB_URI=your_mongodb_connection_string
+JWT_SECRET=your_jwt_secret
+NODE_ENV=development
+PORT=5000
 ```
 
-Enter your AWS Access Key ID, Secret Access Key, default region (eu-north-1), and output format (json).
+Create a `.env` file in the backend directory with the following variables:
 
-## Step 4: Create the NAT Gateway
-
-Create a NAT Gateway in the correct public subnet:
-
-```bash
-cd infrastructure
-./create-nat-gateway.sh
+```
+MONGODB_URI=your_mongodb_connection_string
+JWT_SECRET=your_jwt_secret
+TWILIO_ACCOUNT_SID=your_twilio_account_sid
+TWILIO_AUTH_TOKEN=your_twilio_auth_token
+TWILIO_PHONE_NUMBER=your_twilio_phone_number
+EMAIL_SERVICE=your_email_service
+EMAIL_USER=your_email_user
+EMAIL_PASSWORD=your_email_password
+FRONTEND_URL=http://localhost:3000
 ```
 
-This script will:
-- Find the VPC with the tag name 'ticketing-app-vpc'
-- Find the public subnet with the tag name 'ticketing-app-public-subnet-1'
-- Check if a NAT Gateway already exists
-- If it exists in the wrong subnet, offer to delete it and create a new one
-- Create a new NAT Gateway in the public subnet
-- Allocate an Elastic IP for the NAT Gateway
-- Update the private route table to route internet traffic through the NAT Gateway
+## Step 4: Set Up MongoDB
 
-## Step 5: Deploy the Infrastructure
+1. Create a MongoDB Atlas account or use another MongoDB provider
+2. Set up a new cluster
+3. Create a database user with appropriate permissions
+4. Whitelist your IP address or set network access to allow connections from anywhere
+5. Get your MongoDB connection string and add it to your `.env` files
 
-Deploy the CloudFormation stack for the infrastructure:
+## Step 5: Set Up Twilio for SMS Verification
 
-```bash
-./deploy-stack.sh
-```
+1. Create a Twilio account
+2. Get your Account SID and Auth Token
+3. Get a Twilio phone number
+4. Add these details to your backend `.env` file
 
-This will create or update the following resources:
-- VPC with public and private subnets
-- Internet Gateway
-- Route tables and routes
-- Security groups for web, app, and database tiers
+## Step 6: Set Up Email Service
 
-## Step 6: Deploy Monitoring Configuration
+1. Choose an email service provider (Gmail, SendGrid, etc.)
+2. Configure the email service with your account details
+3. Add these details to your backend `.env` file
 
-Deploy the CloudWatch monitoring configuration:
+## Step 7: Start the Development Server
 
 ```bash
-./deploy-monitoring.sh
+npm run dev
 ```
 
-This will set up:
-- CloudWatch Dashboard
-- CPU Utilization Alarms
-- Database CPU Utilization Alarms
-- 5XX Error Rate Alarms
-- SNS Topic for Alarms
-- Log Groups for Application and System Logs
+This will start both the frontend and backend servers in development mode.
 
-## Step 7: Deploy Backup Configuration
+## Step 8: Initialize the Database
 
-Deploy the AWS Backup configuration:
+The application will automatically create the necessary collections in MongoDB when it first runs. If you want to add sample data, you can use the following script:
 
 ```bash
-./deploy-backup.sh
+node backend/scripts/seed-database.js
 ```
 
-This will set up:
-- Backup Vault
-- Backup Plan with daily backups
-- IAM Role for AWS Backup
-- Backup Selection for the database
+## Step 9: Access the Application
 
-## Step 8: Initialize Elastic Beanstalk
+Open your browser and navigate to:
 
-Initialize Elastic Beanstalk for the application:
-
-```bash
-cd ..
-eb init mobile-ticketing-system --platform node.js --region eu-north-1
+```
+http://localhost:3000
 ```
 
-## Step 9: Create Elastic Beanstalk Environment
+## Step 10: Create an Admin User
 
-Create an Elastic Beanstalk environment:
+Register a new user through the application interface, then update the user's role to "admin" in the MongoDB database:
 
-```bash
-eb create production-environment \
-  --instance_type t3.small \
-  --vpc.id vpc-xxx \
-  --vpc.elbsubnets subnet-xxx,subnet-yyy \
-  --vpc.ec2subnets subnet-zzz,subnet-www \
-  --vpc.elbsg sg-xxx \
-  --vpc.securitygroups sg-yyy
+```javascript
+db.users.updateOne(
+  { email: "admin@example.com" },
+  { $set: { role: "admin" } }
+)
 ```
 
-Replace the placeholder values with the actual IDs from your AWS account. You can find these IDs in the AWS Console or by running:
+## Step 11: Set Up for Production
 
-```bash
-aws ec2 describe-vpcs --filters "Name=tag:Name,Values=ticketing-app-vpc" --query "Vpcs[0].VpcId" --output text
-aws ec2 describe-subnets --filters "Name=tag:Name,Values=ticketing-app-public-subnet-1,ticketing-app-public-subnet-2" --query "Subnets[*].SubnetId" --output text
-aws ec2 describe-subnets --filters "Name=tag:Name,Values=ticketing-app-private-subnet-1,ticketing-app-private-subnet-2" --query "Subnets[*].SubnetId" --output text
-aws ec2 describe-security-groups --filters "Name=tag:Name,Values=ticketing-app-web-sg" --query "SecurityGroups[0].GroupId" --output text
-aws ec2 describe-security-groups --filters "Name=tag:Name,Values=ticketing-app-app-sg" --query "SecurityGroups[0].GroupId" --output text
-```
+When deploying to production, make sure to:
 
-## Step 10: Build and Deploy the Application
+1. Set `NODE_ENV=production` in your environment variables
+2. Use a strong, unique JWT secret
+3. Set up proper security measures (HTTPS, rate limiting, etc.)
+4. Configure proper logging and monitoring
 
-Build and deploy the application to Elastic Beanstalk:
+## Step 12: Build for Production
 
 ```bash
 npm run build
-eb deploy
 ```
 
-## Step 11: Set Up the Database
+This will create a production build of the frontend in the `dist` directory.
 
-Create an RDS PostgreSQL instance:
+## Step 13: Start the Production Server
 
 ```bash
-aws rds create-db-instance \
-  --db-instance-identifier mobile-ticketing-db \
-  --db-instance-class db.t3.small \
-  --engine postgres \
-  --allocated-storage 20 \
-  --master-username postgres \
-  --master-user-password your_password \
-  --vpc-security-group-ids sg-xxx \
-  --db-subnet-group-name your_db_subnet_group \
-  --db-name ticketing_db \
-  --backup-retention-period 7 \
-  --tags Key=application,Value=mobile-ticketing-system
+npm start
 ```
 
-Replace `sg-xxx` with the database security group ID and `your_db_subnet_group` with your DB subnet group name.
+This will start the server in production mode, serving the built frontend files.
 
-## Step 12: Initialize the Database
+## Troubleshooting
 
-Initialize the database schema:
+### Database Connection Issues
 
-```bash
-cd infrastructure
-./init-db.sh
-```
+- Verify your MongoDB connection string is correct
+- Ensure your IP address is whitelisted in MongoDB Atlas
+- Check that your database user has the correct permissions
 
-## Step 13: Load Sample Data (Optional)
+### SMS Verification Issues
 
-Load sample data into the database:
+- Verify your Twilio credentials are correct
+- Ensure your Twilio account has sufficient funds
+- Check that your Twilio phone number is configured correctly
 
-```bash
-./load-sample-data.sh
-```
+### Email Service Issues
 
-## Step 14: Update Environment Variables
+- Verify your email service credentials are correct
+- Check that your email service is properly configured
+- Ensure your email account has not been blocked or limited
 
-Update the Elastic Beanstalk environment variables with the database connection details:
+## Additional Resources
 
-```bash
-eb setenv \
-  DB_HOST=your_rds_endpoint \
-  DB_PORT=5432 \
-  DB_NAME=ticketing_db \
-  DB_USER=postgres \
-  DB_PASSWORD=your_password
-```
-
-Replace `your_rds_endpoint` with the actual RDS endpoint and `your_password` with the actual password.
-
-## Step 15: Verify Deployment
-
-Verify that the application is running correctly:
-
-```bash
-cd ..
-./check-status.sh
-```
-
-Access the application URL provided by Elastic Beanstalk:
-
-```bash
-eb open
-```
-
-## Step 16: Set Up CI/CD (Optional)
-
-Set up CI/CD with GitHub Actions:
-
-1. Push the code to a GitHub repository
-2. Add AWS credentials as GitHub Secrets:
-   - AWS_ACCESS_KEY_ID
-   - AWS_SECRET_ACCESS_KEY
-3. Uncomment the deployment step in .github/workflows/deploy.yml
-
-## Cleanup
-
-To delete all resources when they are no longer needed:
-
-```bash
-./cleanup.sh
-```
-
-**WARNING**: This action is irreversible and will result in data loss!
+- [MongoDB Documentation](https://docs.mongodb.com/)
+- [Twilio Documentation](https://www.twilio.com/docs)
+- [Node.js Documentation](https://nodejs.org/en/docs/)
+- [React Documentation](https://reactjs.org/docs/getting-started.html)

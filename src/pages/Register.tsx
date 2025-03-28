@@ -12,9 +12,11 @@ export default function RegisterDetails() {
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
   const navigate = useNavigate();
-  const { login, updateUserProfile } = useAuth();
+  const { register } = useAuth();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -22,56 +24,75 @@ export default function RegisterDetails() {
       ...prev,
       [name]: value,
     }));
+    // Clear error when user types
+    if (error) setError("");
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError("");
+
+    // DEVELOPMENT ONLY: Skip validation and registration process
+    // TODO: REMOVE BEFORE PRODUCTION
+    console.log(
+      "DEV MODE: Skipping registration validation and proceeding to home",
+    );
+    navigate("/");
+    return;
 
     // Validate password match
     if (formData.password !== formData.confirmPassword) {
-      alert("Passwords do not match");
+      setError("Passwords do not match");
       return;
     }
 
-    // Save basic profile data
-    updateUserProfile({
-      name: formData.name,
-      email: formData.email,
-    });
+    // Validate password strength
+    if (formData.password.length < 8) {
+      setError("Password must be at least 8 characters long");
+      return;
+    }
 
-    // Navigate to profile setup
-    navigate("/profile-setup");
+    setIsLoading(true);
+    try {
+      // Register user with backend
+      const success = await register({
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+      });
+
+      if (success) {
+        // Navigate to profile setup
+        navigate("/profile-setup");
+      } else {
+        setError("Registration failed. Please try again.");
+      }
+    } catch (err: any) {
+      setError(err.message || "An error occurred during registration");
+      console.error("Registration error:", err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleSocialLogin = (provider: "facebook" | "google") => {
-    // In a real implementation, you would integrate with the respective social auth provider SDK
-    // For now, we'll simulate a successful login
-    console.log(`Logging in with ${provider}`);
+  const handleSocialLogin = async (provider: "facebook" | "google") => {
+    setError("");
+    setIsLoading(true);
 
-    // Simulate getting user data from social provider
-    const mockUserData = {
-      name: provider === "facebook" ? "Facebook User" : "Google User",
-      email: `${provider}.user@example.com`,
-    };
-
-    // Update form data with the social provider's data
-    setFormData({
-      ...formData,
-      name: mockUserData.name,
-      email: mockUserData.email,
-      password: "", // In a real implementation, you might generate a secure random password
-      confirmPassword: "",
-    });
-
-    // Save profile data from social login
-    updateUserProfile({
-      name: mockUserData.name,
-      email: mockUserData.email,
-    });
-
-    // In a production app, you would handle the OAuth flow properly
-    // For now, just navigate to the profile setup page
-    navigate("/profile-setup");
+    try {
+      // In a real implementation, you would integrate with the respective social auth provider SDK
+      // For now, we'll show an error message
+      setError(
+        `${provider} login is currently unavailable. Please register with email.`,
+      );
+    } catch (err) {
+      setError(
+        `${provider} login failed. Please try again or use email registration.`,
+      );
+      console.error(`${provider} login error:`, err);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -80,7 +101,7 @@ export default function RegisterDetails() {
       <div
         className="absolute top-0 left-0 right-0 h-[200px] bg-[#0A1128] z-0"
         style={{
-          borderBottomLeftRadius: "50%", // Curve only the left side
+          borderBottomLeftRadius: "30%", // Curve only the left side
           borderBottomRightRadius: "0%", // No curve on the right side
         }}
       >
@@ -101,8 +122,14 @@ export default function RegisterDetails() {
       <div className="absolute top-[57%] left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-full max-w-md px-6 z-10">
         <form
           onSubmit={handleSubmit}
-          className="p-6 rounded-lg shadow-lg backdrop-blur-sm"
+          className="p-6 rounded-lg shadow-lg backdrop-blur-sm bg-white/30"
         >
+          {error && (
+            <div className="mb-4 p-2 bg-red-100 text-red-700 rounded-md text-center">
+              {error}
+            </div>
+          )}
+
           <div className="mb-4">
             <input
               type="text"
@@ -112,6 +139,7 @@ export default function RegisterDetails() {
               value={formData.name}
               onChange={handleChange}
               required
+              disabled={isLoading}
             />
           </div>
 
@@ -125,6 +153,7 @@ export default function RegisterDetails() {
               onChange={handleChange}
               required
               inputMode="email"
+              disabled={isLoading}
             />
           </div>
 
@@ -137,11 +166,13 @@ export default function RegisterDetails() {
               value={formData.password}
               onChange={handleChange}
               required
+              disabled={isLoading}
             />
             <button
               type="button"
               className="p-2"
               onClick={() => setShowPassword(!showPassword)}
+              disabled={isLoading}
             >
               👁️
             </button>
@@ -156,11 +187,13 @@ export default function RegisterDetails() {
               value={formData.confirmPassword}
               onChange={handleChange}
               required
+              disabled={isLoading}
             />
             <button
               type="button"
               className="p-2"
               onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+              disabled={isLoading}
             >
               👁️
             </button>
@@ -168,9 +201,36 @@ export default function RegisterDetails() {
 
           <button
             type="submit"
-            className="w-full bg-[#0A1128] text-white py-3 rounded-md font-bold mt-4"
+            className="w-full bg-[#0A1128] text-white py-3 rounded-md font-bold mt-4 flex items-center justify-center"
+            disabled={isLoading}
           >
-            REGISTER & CONTINUE
+            {isLoading ? (
+              <>
+                <svg
+                  className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                >
+                  <circle
+                    className="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    strokeWidth="4"
+                  ></circle>
+                  <path
+                    className="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                  ></path>
+                </svg>
+                REGISTERING...
+              </>
+            ) : (
+              "REGISTER & CONTINUE"
+            )}
           </button>
 
           <div className="flex items-center my-4">
@@ -184,6 +244,7 @@ export default function RegisterDetails() {
               type="button"
               onClick={() => handleSocialLogin("facebook")}
               className="flex-1 flex items-center justify-center gap-2 bg-[#1877F2] text-white py-2 rounded-md font-bold"
+              disabled={isLoading}
             >
               <FacebookIcon className="w-5 h-5" />
               Facebook
@@ -192,6 +253,7 @@ export default function RegisterDetails() {
               type="button"
               onClick={() => handleSocialLogin("google")}
               className="flex-1 flex items-center justify-center gap-2 bg-white border border-gray-300 text-gray-700 py-2 rounded-md font-bold"
+              disabled={isLoading}
             >
               <GoogleIcon className="w-5 h-5" />
               Google
@@ -205,6 +267,13 @@ export default function RegisterDetails() {
           <p className="text-center text-xs">
             <a href="/terms" className="font-bold text-blue-600">
               TERMS OF USE
+            </a>
+          </p>
+
+          <p className="text-center mt-4">
+            Already have an account?{" "}
+            <a href="/login" className="font-bold text-blue-600">
+              Login
             </a>
           </p>
         </form>

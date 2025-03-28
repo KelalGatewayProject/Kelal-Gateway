@@ -78,6 +78,12 @@ const ProfileSetup: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
+    // DEVELOPMENT ONLY: Skip profile setup
+    // TODO: REMOVE BEFORE PRODUCTION
+    console.log("DEV MODE: Skipping profile setup and proceeding to home");
+    navigate("/");
+    return;
+
     // Save profile data to auth context
     updateUserProfile({
       birthDate,

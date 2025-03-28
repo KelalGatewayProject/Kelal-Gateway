@@ -25,7 +25,7 @@ const PageLayout: React.FC<PageLayoutProps> = ({
       <TopNavigation />
 
       {/* Main Content */}
-      <div className="flex-1 pt-[57px] pb-16">{children}</div>
+      <div className="flex-1 pt-[67px] pb-12">{children}</div>
 
       <BottomNavigation />
     </div>

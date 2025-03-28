@@ -168,6 +168,52 @@ const VenuesAndClubs: React.FC = () => {
                     FOLLOW
                   </Button>
                 </div>
+                <Button
+                  variant="outline"
+                  className="w-full mt-2 border-[#0A1128] text-[#0A1128]"
+                  onClick={() => {
+                    // App download link
+                    const appDownloadLink =
+                      "https://play.google.com/store/apps/details?id=com.yourapp"; // Replace with your actual app store link
+                    const appDeepLink = `yourapp://venue?id=${venue.id}`; // Replace with your actual deep link scheme
+
+                    // Create a rich description with all required details
+                    const shareText = `
+🏢 VENUE: ${venue.name}
+
+📝 DESCRIPTION: ${venue.description}
+
+📍 LOCATION: ${venue.address}
+📞 CONTACT: ${venue.phone}
+⭐ RATING: ${venue.rating}/5
+🎭 UPCOMING EVENTS: ${venue.upcoming}
+
+Open in app or download: ${appDownloadLink}
+`;
+
+                    if (navigator.share) {
+                      navigator
+                        .share({
+                          title: venue.name,
+                          text: shareText,
+                          url: window.location.href + "/" + venue.id,
+                        })
+                        .then(() => console.log("Successful share"))
+                        .catch((error) => console.log("Error sharing:", error));
+                    } else {
+                      alert(
+                        "Share this venue:\n\n" +
+                          shareText +
+                          "\n" +
+                          window.location.href +
+                          "/" +
+                          venue.id,
+                      );
+                    }
+                  }}
+                >
+                  <Share className="h-4 w-4 mr-1" /> SHARE
+                </Button>
               </div>
             </div>
           ))}

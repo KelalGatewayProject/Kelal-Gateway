@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Camera, X, Check, AlertCircle } from "lucide-react";
 import { Html5Qrcode } from "html5-qrcode";
+import { api } from "@/lib/supabase";
 
 interface QRCodeScannerProps {
   isOpen: boolean;
@@ -9,6 +10,9 @@ interface QRCodeScannerProps {
   onScanSuccess: (data: string) => Promise<boolean> | void;
   title?: string;
   description?: string;
+  validateWithServer?: boolean;
+  validationEndpoint?: string;
+  authToken?: string;
 }
 
 const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
@@ -17,10 +21,14 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
   onScanSuccess,
   title = "Scan QR Code",
   description = "Position the QR code within the frame",
+  validateWithServer = false,
+  validationEndpoint = "/validate-qr",
+  authToken,
 }) => {
   const [scanning, setScanning] = useState(false);
   const [hasCamera, setHasCamera] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [isProcessing, setIsProcessing] = useState(false);
   const scannerRef = useRef<Html5Qrcode | null>(null);
   const scannerContainerRef = useRef<HTMLDivElement>(null);
 
@@ -96,6 +104,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
   const handleScanComplete = async (data: string) => {
     // Stop scanning temporarily
     stopScanner();
+    setIsProcessing(true);
 
     try {
       // Try to parse the data as JSON to see if it's valid
@@ -107,6 +116,38 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
         parsedData = data;
       }
 
+      // If server validation is enabled, validate with server first
+      if (validateWithServer && authToken) {
+        try {
+          const validationResponse = await api.post(
+            validationEndpoint,
+            { qrData: typeof parsedData === "object" ? parsedData : data },
+            authToken,
+          );
+
+          if (!validationResponse.valid) {
+            setError(validationResponse.message || "Invalid QR code");
+            setIsProcessing(false);
+            // Restart scanning after a delay
+            setTimeout(() => {
+              setError(null);
+              startScanner();
+            }, 3000);
+            return;
+          }
+        } catch (error: any) {
+          console.error("Server validation error:", error);
+          setError(error.message || "Error validating QR code with server");
+          setIsProcessing(false);
+          // Restart scanning after a delay
+          setTimeout(() => {
+            setError(null);
+            startScanner();
+          }, 3000);
+          return;
+        }
+      }
+
       // Call the onScanSuccess callback and await its result if it returns a Promise
       const result = await onScanSuccess(
         typeof parsedData === "object" ? JSON.stringify(parsedData) : data,
@@ -116,10 +157,16 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
       if (result === false) {
         startScanner();
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error in scan success handler:", error);
-      // Restart scanning on error
-      startScanner();
+      setError(error.message || "Error processing QR code");
+      // Restart scanning after a delay
+      setTimeout(() => {
+        setError(null);
+        startScanner();
+      }, 3000);
+    } finally {
+      setIsProcessing(false);
     }
   };
 
@@ -144,6 +191,20 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
                 Try Again
               </Button>
             </div>
+          ) : error ? (
+            <div className="text-center p-8">
+              <AlertCircle className="h-12 w-12 text-red-500 mx-auto mb-4" />
+              <p className="text-red-600 font-medium">{error}</p>
+              <Button
+                onClick={() => {
+                  setError(null);
+                  startScanner();
+                }}
+                className="mt-4 bg-[#0A1128]"
+              >
+                Try Again
+              </Button>
+            </div>
           ) : (
             <div className="relative">
               <div
@@ -162,7 +223,7 @@ const QRCodeScanner: React.FC<QRCodeScannerProps> = ({
                 {scanning && (
                   <div className="absolute bottom-4 left-0 right-0 text-center">
                     <p className="text-white bg-black/50 inline-block px-3 py-1 rounded-full text-sm">
-                      Scanning...
+                      {isProcessing ? "Processing..." : "Scanning..."}
                     </p>
                   </div>
                 )}
