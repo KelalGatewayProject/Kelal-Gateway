@@ -14,6 +14,13 @@ import PageLayout from "@/components/PageLayout";
 import { Button } from "@/components/ui/button";
 import EventOrganizerDrawer from "@/components/EventOrganizerDrawer";
 
+/**
+ * EventOrganizerDashboard Component
+ *
+ * This component serves as the main dashboard for event organizers.
+ * It displays their events, allows them to create new events, and manage existing ones.
+ * This page should only be accessible to users with the 'organizer' role.
+ */
 const EventOrganizerDashboard: React.FC = () => {
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
@@ -58,7 +65,7 @@ const EventOrganizerDashboard: React.FC = () => {
       location: "Central Park",
       attendees: 250,
       ticketsSold: 180,
-      revenue: "ETB 5,400",
+      revenue: "0.00 ETB", // All events are free during testing phase
       positions: [
         { title: "Security", filled: true },
         { title: "Bartender", filled: false },
@@ -73,7 +80,7 @@ const EventOrganizerDashboard: React.FC = () => {
       location: "Convention Center",
       attendees: 120,
       ticketsSold: 100,
-      revenue: "ETB 3,000",
+      revenue: "0.00 ETB", // All events are free during testing phase
       positions: [
         { title: "Registration Desk", filled: true },
         { title: "AV Technician", filled: false },
@@ -82,6 +89,7 @@ const EventOrganizerDashboard: React.FC = () => {
     },
   ];
 
+  // Handle opening the position request drawer
   const openPositionRequest = (event: any, position: string) => {
     setSelectedEvent({
       ...event,
@@ -91,11 +99,13 @@ const EventOrganizerDashboard: React.FC = () => {
     setIsDrawerOpen(true);
   };
 
+  // Handle accepting a position
   const handleAcceptPosition = () => {
     // Logic to handle position acceptance
     setIsDrawerOpen(false);
   };
 
+  // Handle declining a position
   const handleDeclinePosition = () => {
     // Logic to handle position decline
     setIsDrawerOpen(false);
@@ -156,6 +166,13 @@ const EventOrganizerDashboard: React.FC = () => {
             <p className="text-gray-600 mb-4">
               You haven't created any events yet.
             </p>
+            <div className="bg-yellow-100 border-l-4 border-yellow-500 p-4 mb-4 mx-auto max-w-md text-left">
+              <p className="text-sm text-yellow-700">
+                🎉 We're launching with free events only during our testing
+                phase! Payment features coming soon in Stage 2 - stay tuned for
+                updates!
+              </p>
+            </div>
             <Link to="/create-event">
               <Button className="bg-[#0A1128] text-white">
                 Create Your First Event
@@ -209,9 +226,9 @@ const EventOrganizerDashboard: React.FC = () => {
                 <div className="p-3 text-center">
                   <div className="flex items-center justify-center mb-1">
                     <DollarSign className="h-4 w-4 mr-1 text-gray-500" />
-                    <span className="text-sm font-medium">Revenue</span>
+                    <span className="text-sm font-medium">Price</span>
                   </div>
-                  <p className="font-bold">{event.revenue}</p>
+                  <p className="font-bold">0.00 ETB</p>
                 </div>
               </div>
 

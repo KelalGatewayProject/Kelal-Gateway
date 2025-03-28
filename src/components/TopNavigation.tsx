@@ -36,7 +36,9 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
   const [selectedNotification, setSelectedNotification] = useState<any>(null);
   const [isNotificationDetailOpen, setIsNotificationDetailOpen] =
     useState(false);
-  const [viewMode, setViewMode] = useState<"member" | "organizer">("member");
+  const [viewMode, setViewMode] = useState<"member" | "organizer">(
+    userRole === "organizer" ? "organizer" : "member",
+  );
 
   const handleSearchClick = () => {
     navigate("/search");
@@ -154,14 +156,14 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
           <div className="flex items-center justify-center">
             <div className="flex bg-gray-100 rounded-full p-1">
               <button
-                onClick={toggleViewMode}
+                onClick={() => viewMode !== "member" && toggleViewMode()}
                 className={`flex items-center px-3 py-1 rounded-full text-sm font-medium transition-colors ${viewMode === "member" ? "bg-white shadow-sm text-gray-800" : "text-gray-500 hover:text-gray-700"}`}
               >
                 <User className="h-4 w-4 mr-1" />
                 Member
               </button>
               <button
-                onClick={toggleViewMode}
+                onClick={() => viewMode !== "organizer" && toggleViewMode()}
                 className={`flex items-center px-3 py-1 rounded-full text-sm font-medium transition-colors ${viewMode === "organizer" ? "bg-white shadow-sm text-gray-800" : "text-gray-500 hover:text-gray-700"}`}
               >
                 <Briefcase className="h-4 w-4 mr-1" />

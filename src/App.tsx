@@ -16,6 +16,7 @@ const ProfileSetup = lazy(() => import("./pages/ProfileSetup"));
 const Home = lazy(() => import("./pages/Home"));
 const AppSettings = lazy(() => import("./pages/AppSettings"));
 const Calendar = lazy(() => import("./pages/Calendar"));
+const DayEvents = lazy(() => import("./pages/DayEvents"));
 const Credits = lazy(() => import("./pages/Credits"));
 const EventOrganizers = lazy(() => import("./pages/EventOrganizers"));
 const EventDetails = lazy(() => import("./pages/EventDetails"));
@@ -33,6 +34,7 @@ const FreeEventDetails = lazy(() => import("./pages/FreeEventDetails"));
 const LinkUpBazaarEvent = lazy(() => import("./pages/LinkUpBazaarEvent"));
 const EventManagement = lazy(() => import("./pages/EventManagement"));
 const EventApproval = lazy(() => import("./pages/EventApproval"));
+const AdminDashboard = lazy(() => import("./pages/AdminDashboard"));
 
 // Event Organizer Pages
 const EventOrganizerDashboard = lazy(
@@ -42,7 +44,12 @@ const EventOrganizerRegister = lazy(
   () => import("./pages/EventOrganizerRegister"),
 );
 
-// Protected route component
+/**
+ * ProtectedRoute Component
+ *
+ * Ensures that only authenticated users can access the route
+ * Redirects to login page if not authenticated
+ */
 const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   const { isAuthenticated } = useAuth();
 
@@ -53,21 +60,52 @@ const ProtectedRoute = ({ children }: { children: React.ReactNode }) => {
   return <>{children}</>;
 };
 
-// Organizer-only route component
+/**
+ * OrganizerRoute Component
+ *
+ * Ensures that only authenticated users with the 'organizer' role can access the route
+ * Redirects to login page if not authenticated or to home page if not an organizer
+ */
 const OrganizerRoute = ({ children }: { children: React.ReactNode }) => {
-  const { isAuthenticated, userRole } = useAuth();
+  const { isAuthenticated, userRole, isOrganizer } = useAuth();
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
-  if (userRole !== "organizer") {
+  if (!isOrganizer && userRole !== "organizer") {
     return <Navigate to="/" replace />;
   }
 
   return <>{children}</>;
 };
 
+/**
+ * AdminRoute Component
+ *
+ * Ensures that only authenticated users with the 'admin' role can access the route
+ * Redirects to login page if not authenticated or to home page if not an admin
+ */
+const AdminRoute = ({ children }: { children: React.ReactNode }) => {
+  const { isAuthenticated, isAdmin } = useAuth();
+
+  if (!isAuthenticated) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (!isAdmin) {
+    return <Navigate to="/" replace />;
+  }
+
+  return <>{children}</>;
+};
+
+/**
+ * AppRoutes Component
+ *
+ * Defines all the routes for the application
+ * Includes public routes, protected routes, organizer-only routes, and admin-only routes
+ */
 function AppRoutes() {
   return (
     <Routes>
@@ -116,6 +154,14 @@ function AppRoutes() {
         element={
           <ProtectedRoute>
             <Calendar />
+          </ProtectedRoute>
+        }
+      />
+      <Route
+        path="/day-events/:date"
+        element={
+          <ProtectedRoute>
+            <DayEvents />
           </ProtectedRoute>
         }
       />
@@ -259,18 +305,40 @@ function AppRoutes() {
         }
       />
 
+      {/* Admin routes */}
+      <Route
+        path="/admin-dashboard"
+        element={
+          <AdminRoute>
+            <AdminDashboard />
+          </AdminRoute>
+        }
+      />
+
       {import.meta.env.VITE_TEMPO && <Route path="/tempobook/*" />}
 
-      {/* Fallback route */}
+      {/* Event organizer registration is accessible to all authenticated users */}
       <Route
         path="/event-organizer-register"
-        element={<EventOrganizerRegister />}
+        element={
+          <ProtectedRoute>
+            <EventOrganizerRegister />
+          </ProtectedRoute>
+        }
       />
+
+      {/* Fallback route */}
       <Route path="*" element={<Navigate to="/" replace />} />
     </Routes>
   );
 }
 
+/**
+ * App Component
+ *
+ * The main application component that sets up the authentication provider,
+ * routing, and loading states
+ */
 function App() {
   const [isLoading, setIsLoading] = useState(true);
 

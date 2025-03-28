@@ -1,5 +1,5 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import {
   X,
   Calendar,
@@ -9,9 +9,6 @@ import {
   Users,
   Settings,
   LayoutDashboard,
-  FileText,
-  CheckSquare,
-  BarChart,
 } from "lucide-react";
 import { useAuth } from "@/context/AuthContext";
 
@@ -20,9 +17,16 @@ interface SideMenuProps {
   onClose: () => void;
 }
 
+/**
+ * SideMenu Component
+ *
+ * This component renders a side menu with navigation options based on the user's role.
+ * Different menu items are displayed for admin, organizer, and regular members.
+ */
 const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose }) => {
-  const { userRole, logout } = useAuth();
+  const { userRole, logout, isAdmin } = useAuth();
   const isOrganizer = userRole === "organizer";
+  const navigate = useNavigate();
 
   // Demo sponsored events
   const sponsoredEvents = [
@@ -52,6 +56,122 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose }) => {
     },
   ];
 
+  // Handle navigation and close menu
+  const handleNavigation = (path: string) => {
+    navigate(path);
+    onClose();
+  };
+
+  // Render menu items based on user role
+  const renderMenuItems = () => {
+    // Admin only sees the Admin Dashboard link in the side menu
+    if (isAdmin) {
+      return (
+        <>
+          <div
+            className="flex items-center space-x-4 cursor-pointer"
+            onClick={() => handleNavigation("/admin-dashboard")}
+          >
+            <div className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center">
+              <LayoutDashboard className="h-5 w-5" />
+            </div>
+            <span className="font-semibold">ADMIN DASHBOARD</span>
+          </div>
+          {/* Standard member menu items */}
+          {renderMemberMenuItems()}
+        </>
+      );
+    }
+
+    // Organizer sees the Organizer Dashboard link plus standard member items
+    if (isOrganizer) {
+      return (
+        <>
+          <div
+            className="flex items-center space-x-4 cursor-pointer"
+            onClick={() => handleNavigation("/event-organizer-dashboard")}
+          >
+            <div className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center">
+              <LayoutDashboard className="h-5 w-5" />
+            </div>
+            <span className="font-semibold">ORGANIZER DASHBOARD</span>
+          </div>
+          {/* Standard member menu items */}
+          {renderMemberMenuItems()}
+        </>
+      );
+    }
+
+    // Regular member menu items
+    return renderMemberMenuItems();
+  };
+
+  // Standard menu items for all users (members)
+  const renderMemberMenuItems = () => {
+    return (
+      <>
+        {!isOrganizer && (
+          <div
+            className="flex items-center space-x-4 cursor-pointer"
+            onClick={() => handleNavigation("/event-organizer-register")}
+          >
+            <div className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center">
+              <Calendar className="h-5 w-5" />
+            </div>
+            <span className="font-semibold">BECOME AN ORGANIZER</span>
+          </div>
+        )}
+        <div
+          className="flex items-center space-x-4 cursor-pointer"
+          onClick={() => handleNavigation("/my-tickets")}
+        >
+          <div className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center">
+            <Ticket className="h-5 w-5" />
+          </div>
+          <span className="font-semibold">MY TICKETS</span>
+        </div>
+        <div
+          className="flex items-center space-x-4 cursor-pointer"
+          onClick={() => handleNavigation("/credits")}
+        >
+          <div className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center">
+            <CreditCard className="h-5 w-5" />
+          </div>
+          <span className="font-semibold">CREDITS</span>
+        </div>
+        <div
+          className="flex items-center space-x-4 cursor-pointer"
+          onClick={() => handleNavigation("/credits")}
+        >
+          <div className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center">
+            <Award className="h-5 w-5" />
+          </div>
+          <span className="font-semibold">CREDIT POINTS</span>
+        </div>
+        <div
+          className="flex items-center space-x-4 cursor-pointer"
+          onClick={() => handleNavigation("/invite-friends")}
+        >
+          <div className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center">
+            <Users className="h-5 w-5" />
+          </div>
+          <span className="font-semibold">
+            INVITE FRIENDS / EARN CASH CREDIT
+          </span>
+        </div>
+        <div
+          className="flex items-center space-x-4 cursor-pointer"
+          onClick={() => handleNavigation("/app-settings")}
+        >
+          <div className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center">
+            <Settings className="h-5 w-5" />
+          </div>
+          <span className="font-semibold">SETTINGS</span>
+        </div>
+      </>
+    );
+  };
+
   return (
     <>
       {/* Overlay */}
@@ -64,7 +184,7 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose }) => {
 
       {/* Side Menu */}
       <div
-        className={`fixed top-[40px] left-0 w-[306px] h-[694px] bg-white z-40 shadow-[0_6px_6px_rgba(0,0,0,0.1)] transition-transform duration-300 ${
+        className={`fixed top-[75px] left-0 w-[306px] h-[675px] bg-white z-40 shadow-[0_6px_6px_rgba(0,0,0,0.1)] transition-transform duration-300 ${
           isOpen ? "translate-x-0" : "-translate-x-full"
         }`}
         style={{
@@ -80,144 +200,8 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose }) => {
         </div>
 
         {/* Menu Items */}
-        <div className="pt-16 px-6 pb-4 h-full flex flex-col">
-          <div className="flex-1 space-y-8">
-            {isOrganizer ? (
-              // Organizer Menu Items
-              <>
-                <Link
-                  to="/event-organizer-dashboard"
-                  className="flex items-center space-x-4"
-                  onClick={onClose}
-                >
-                  <div className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center">
-                    <LayoutDashboard className="h-5 w-5" />
-                  </div>
-                  <span className="font-semibold">ORGANIZER DASHBOARD</span>
-                </Link>
-                <Link
-                  to="/create-event"
-                  className="flex items-center space-x-4"
-                  onClick={onClose}
-                >
-                  <div className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center">
-                    <Calendar className="h-5 w-5" />
-                  </div>
-                  <span className="font-semibold">CREATE NEW EVENT</span>
-                </Link>
-                <Link
-                  to="/event-approval"
-                  className="flex items-center space-x-4"
-                  onClick={onClose}
-                >
-                  <div className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center">
-                    <CheckSquare className="h-5 w-5" />
-                  </div>
-                  <span className="font-semibold">EVENT APPROVALS</span>
-                </Link>
-                <Link
-                  to="/my-tickets"
-                  className="flex items-center space-x-4"
-                  onClick={onClose}
-                >
-                  <div className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center">
-                    <Ticket className="h-5 w-5" />
-                  </div>
-                  <span className="font-semibold">TICKET MANAGEMENT</span>
-                </Link>
-                <Link
-                  to="/wallet"
-                  className="flex items-center space-x-4"
-                  onClick={onClose}
-                >
-                  <div className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center">
-                    <BarChart className="h-5 w-5" />
-                  </div>
-                  <span className="font-semibold">SALES ANALYTICS</span>
-                </Link>
-                <Link
-                  to="/app-settings"
-                  className="flex items-center space-x-4"
-                  onClick={onClose}
-                >
-                  <div className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center">
-                    <Settings className="h-5 w-5" />
-                  </div>
-                  <span className="font-semibold">SETTINGS</span>
-                </Link>
-              </>
-            ) : (
-              // Attendee Menu Items
-              <>
-                <Link
-                  to={
-                    isOrganizer ? "/create-event" : "/event-organizer-register"
-                  }
-                  className="flex items-center space-x-4"
-                  onClick={onClose}
-                >
-                  <div className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center">
-                    <Calendar className="h-5 w-5" />
-                  </div>
-                  <span className="font-semibold">
-                    {isOrganizer ? "CREATE EVENT" : "BECOME AN ORGANIZER"}
-                  </span>
-                </Link>
-                <Link
-                  to="/my-tickets"
-                  className="flex items-center space-x-4"
-                  onClick={onClose}
-                >
-                  <div className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center">
-                    <Ticket className="h-5 w-5" />
-                  </div>
-                  <span className="font-semibold">MY TICKETS</span>
-                </Link>
-                <Link
-                  to="/wallet"
-                  className="flex items-center space-x-4"
-                  onClick={onClose}
-                >
-                  <div className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center">
-                    <CreditCard className="h-5 w-5" />
-                  </div>
-                  <span className="font-semibold">WALLET</span>
-                </Link>
-                <Link
-                  to="/credits"
-                  className="flex items-center space-x-4"
-                  onClick={onClose}
-                >
-                  <div className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center">
-                    <Award className="h-5 w-5" />
-                  </div>
-                  <span className="font-semibold">CREDIT POINTS</span>
-                </Link>
-                <Link
-                  to="/invite-friends"
-                  className="flex items-center space-x-4"
-                  onClick={onClose}
-                >
-                  <div className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center">
-                    <Users className="h-5 w-5" />
-                  </div>
-                  <span className="font-semibold">
-                    INVITE FRIENDS / EARN CASH CREDIT
-                  </span>
-                </Link>
-                <Link
-                  to="/app-settings"
-                  className="flex items-center space-x-4"
-                  onClick={onClose}
-                >
-                  <div className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center">
-                    <Settings className="h-5 w-5" />
-                  </div>
-                  <span className="font-semibold">SETTINGS</span>
-                </Link>
-              </>
-            )}
-          </div>
+        <div className="pt-6 px-8 pb-4 h-full flex flex-col">
+          <div className="flex-1 space-y-6">{renderMenuItems()}</div>
 
           {/* Sponsored Events for Attendees / Recent Events for Organizers */}
           <div className="mt-auto">

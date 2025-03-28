@@ -1,81 +1,39 @@
 #!/bin/bash
 
-# Master deployment script for Mobile Ticketing System
+# This script deploys the application without AWS dependencies
 
-set -e
+echo "Starting deployment process..."
 
-echo "=== Mobile Ticketing System Deployment ==="
-echo "This script will deploy the entire infrastructure and application."
-
-# Check for AWS CLI
-if ! command -v aws &> /dev/null; then
-    echo "Error: AWS CLI is not installed. Please install it first."
+# Check if Node.js is installed
+if ! command -v node &> /dev/null; then
+    echo "Error: Node.js is not installed. Please install Node.js before deploying."
     exit 1
 fi
 
-# Check for AWS credentials
-if ! aws sts get-caller-identity &> /dev/null; then
-    echo "Error: AWS credentials not configured. Please run 'aws configure' first."
+# Check if npm is installed
+if ! command -v npm &> /dev/null; then
+    echo "Error: npm is not installed. Please install npm before deploying."
     exit 1
 fi
 
-# Deploy infrastructure
-echo "\n=== Deploying Infrastructure ==="
-cd infrastructure
-./deploy-stack.sh
-cd ..
+# Install dependencies
+echo "Installing dependencies..."
+npm install
 
-# Deploy monitoring
-echo "\n=== Deploying Monitoring Configuration ==="
-cd infrastructure
-./deploy-monitoring.sh
-cd ..
-
-# Deploy backup
-echo "\n=== Deploying Backup Configuration ==="
-cd infrastructure
-./deploy-backup.sh
-cd ..
-
-# Build application
-echo "\n=== Building Application ==="
-npm ci
+# Build the application
+echo "Building the application..."
 npm run build
 
-# Create deployment package
-echo "\n=== Creating Deployment Package ==="
-rm -f deploy.zip
-zip -r deploy.zip dist package.json package-lock.json
-
-# Deploy to Elastic Beanstalk
-echo "\n=== Deploying to Elastic Beanstalk ==="
-eb deploy
-
-# Initialize database (if needed)
-read -p "Do you want to initialize the database? (y/n): " init_db
-if [[ $init_db == "y" || $init_db == "Y" ]]; then
-    echo "\n=== Initializing Database ==="
-    cd infrastructure
-    ./init-db.sh
-    cd ..
+# Check if build was successful
+if [ $? -ne 0 ]; then
+    echo "Error: Build failed. Please check the logs for more information."
+    exit 1
 fi
 
-# Load sample data (if needed)
-read -p "Do you want to load sample data? (y/n): " load_data
-if [[ $load_data == "y" || $load_data == "Y" ]]; then
-    echo "\n=== Loading Sample Data ==="
-    cd infrastructure
-    ./load-sample-data.sh
-    cd ..
-fi
+echo "Build successful!"
 
-echo "\n=== Deployment Completed Successfully! ==="
-echo "Your Mobile Ticketing System has been deployed with the following components:"
-echo "- VPC with public and private subnets"
-echo "- NAT Gateway for private subnet internet access"
-echo "- Security groups for web, app, and database tiers"
-echo "- Application deployed to Elastic Beanstalk"
-echo "- Database initialized with schema"
-echo "- CloudWatch monitoring and alarms configured"
-echo "- AWS Backup configured for database backups"
-echo "\nAccess your application at the Elastic Beanstalk URL provided above."
+# Start the application
+echo "Starting the application..."
+npm start
+
+echo "Deployment complete! The application is now running."

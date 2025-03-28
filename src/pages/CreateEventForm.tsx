@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import PageLayout from "@/components/PageLayout";
-import SimpleGoogleMap from "@/components/SimpleGoogleMap";
+import SimpleOpenStreetMap from "@/components/SimpleOpenStreetMap";
 import {
   Phone,
   Globe,
@@ -193,8 +193,11 @@ const CreateEventForm: React.FC = () => {
     // Update form data with the new IDs
     setFormData(updatedFormData);
 
-    // If we're on step 6 (Additional Details) and it's a free event, skip to approval
-    if (currentStep === 6 && updatedFormData.eventCost === "free") {
+    // Always set event cost to free for initial launch
+    updatedFormData.eventCost = "free";
+
+    // If we're on step 6 (Additional Details), skip to approval
+    if (currentStep === 6) {
       // Submit form and navigate to event approval page with event data
       navigate("/event-approval", { state: { eventData: updatedFormData } });
       return;
@@ -874,7 +877,6 @@ const CreateEventForm: React.FC = () => {
         return (
           <div className="space-y-4">
             <h2 className="text-2xl font-bold text-center">THE VENUE</h2>
-
             <div
               className="border border-gray-300 rounded-md p-4 flex items-center justify-center relative bg-white overflow-hidden cursor-pointer shadow-md"
               onClick={() => document.getElementById("venueBanner")?.click()}
@@ -929,7 +931,6 @@ const CreateEventForm: React.FC = () => {
                 </div>
               )}
             </div>
-
             <Input
               name="venueName"
               value={formData.venueName}
@@ -940,7 +941,6 @@ const CreateEventForm: React.FC = () => {
               type="text"
               style={{ touchAction: "manipulation" }}
             />
-
             <div className="flex items-center">
               <div className="mr-2 text-blue-900">
                 <Phone size={24} />
@@ -956,7 +956,6 @@ const CreateEventForm: React.FC = () => {
                 style={{ touchAction: "manipulation" }}
               />
             </div>
-
             <div className="flex items-center">
               <div className="mr-2 text-blue-900">
                 <MapPin size={24} />
@@ -972,42 +971,25 @@ const CreateEventForm: React.FC = () => {
                 style={{ touchAction: "manipulation" }}
               />
             </div>
-
+            // In your CreateEventForm component (step 5 case)
             <div>
               <p className="mb-2 font-bold">PIN LOCATION ON MAP</p>
-              <div className="h-48 bg-white border border-gray-300 rounded-md overflow-hidden shadow-md">
-                <SimpleGoogleMap
+              <div className="h-48 bg-white border border-gray-300 rounded-md overflow-hidden shadow-md relative">
+                <SimpleOpenStreetMap
                   initialLocation={formData.venueLocation}
-                  onLocationChange={(newLocation) => {
+                  onLocationChange={(newLocation, address) => {
                     setFormData({
                       ...formData,
                       venueLocation: newLocation,
+                      venueAddress: address || formData.venueAddress,
                     });
-
-                    // Try to get address from coordinates using Geocoding API
-                    const apiKey = "AIzaSyBIwzALxUPNbatRBj3Xi1Uhp0fFzwWNBkE";
-                    fetch(
-                      `https://maps.googleapis.com/maps/api/geocode/json?latlng=${newLocation.lat},${newLocation.lng}&key=${apiKey}`,
-                    )
-                      .then((response) => response.json())
-                      .then((data) => {
-                        if (data.results && data.results.length > 0) {
-                          setFormData((prev) => ({
-                            ...prev,
-                            venueAddress: data.results[0].formatted_address,
-                          }));
-                        }
-                      })
-                      .catch((error) =>
-                        console.error("Error fetching address:", error),
-                      );
                   }}
                   height="100%"
                 />
               </div>
               <p className="text-xs text-gray-500 mt-1 text-center">
                 Click on the map to place a marker or drag the marker to adjust
-                the location
+                the location. Click the expand button to view full screen.
               </p>
             </div>
           </div>
@@ -1057,38 +1039,23 @@ const CreateEventForm: React.FC = () => {
               </div>
 
               <div>
-                <p className="text-center font-bold mb-2">
-                  Is this a free or paid event?
-                </p>
-                <div className="flex justify-center space-x-8 mb-6">
+                <p className="text-center font-bold mb-2">Event Cost</p>
+                <div className="flex justify-center mb-6">
                   <Button
-                    variant={
-                      formData.eventCost === "free" ? "default" : "outline"
-                    }
-                    className={
-                      formData.eventCost === "free"
-                        ? "bg-[#0A1128] text-white shadow-md"
-                        : "border-gray-300 shadow-md"
-                    }
-                    onClick={() => handleRadioChange("eventCost", "free")}
+                    variant="default"
+                    className="bg-[#0A1128] text-white shadow-md"
                     style={{ touchAction: "manipulation" }}
+                    disabled
                   >
                     FREE
                   </Button>
-                  <Button
-                    variant={
-                      formData.eventCost === "paid" ? "default" : "outline"
-                    }
-                    className={
-                      formData.eventCost === "paid"
-                        ? "bg-[#0A1128] text-white shadow-md"
-                        : "border-gray-300 shadow-md"
-                    }
-                    onClick={() => handleRadioChange("eventCost", "paid")}
-                    style={{ touchAction: "manipulation" }}
-                  >
-                    PAID
-                  </Button>
+                </div>
+                <div className="bg-yellow-100 border-l-4 border-yellow-500 p-4 mb-4">
+                  <p className="text-sm text-yellow-700">
+                    🎉 We're launching with free events only during our testing
+                    phase! Payment features coming soon in Stage 2 - stay tuned
+                    for updates!
+                  </p>
                 </div>
               </div>
 
@@ -1132,40 +1099,20 @@ const CreateEventForm: React.FC = () => {
           </div>
         );
 
-      case 7: // Ticket Prices
+      case 7: // Ticket Information
         return (
           <div className="space-y-4">
-            <h2 className="text-2xl font-bold text-center">TICKET PRICES</h2>
+            <h2 className="text-2xl font-bold text-center">
+              TICKET INFORMATION
+            </h2>
 
             <div className="space-y-4">
-              {/* General Tickets */}
-              <div className="shadow-md p-4 rounded-md bg-white">
-                <p className="font-bold mb-2">GENERAL TICKETS:</p>
-                <input
-                  name="generalTicketPrice"
-                  value={formData.generalTicketPrice || ""}
-                  onChange={handleInputChange}
-                  placeholder="Enter price"
-                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                  inputMode="decimal"
-                  type="number"
-                  style={{ touchAction: "manipulation" }}
-                />
-              </div>
-
-              {/* VIP Tickets */}
-              <div className="shadow-md p-4 rounded-md bg-white">
-                <p className="font-bold mb-2">VIP TICKETS</p>
-                <input
-                  name="vipTicketPrice"
-                  value={formData.vipTicketPrice || ""}
-                  onChange={handleInputChange}
-                  placeholder="Enter price"
-                  className="w-full p-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
-                  inputMode="decimal"
-                  type="number"
-                  style={{ touchAction: "manipulation" }}
-                />
+              <div className="bg-yellow-100 border-l-4 border-yellow-500 p-4 mb-4">
+                <p className="text-sm text-yellow-700 font-bold">
+                  🎉 We're launching with free events only during our testing
+                  phase! Payment features coming soon in Stage 2 - stay tuned
+                  for updates!
+                </p>
               </div>
 
               {/* Ticket Quantity */}
@@ -1190,24 +1137,26 @@ const CreateEventForm: React.FC = () => {
                 </div>
               </div>
 
-              {/* Disclaimer */}
+              {/* Free Ticket Information */}
+              <div className="shadow-md p-4 rounded-md bg-white">
+                <p className="font-bold mb-2">FREE TICKETS</p>
+                <p className="text-sm">
+                  All events are currently free during our testing phase.
+                  Attendees will receive a QR code ticket when they click the
+                  "FREE TICKET" button on the event page.
+                </p>
+              </div>
+
+              {/* Integration Information */}
               <div className="mt-4 p-4 bg-white border border-gray-300 rounded-md text-sm text-center shadow-md">
                 <p>
-                  "Please note that a 10% fee will be charged for each eTicket
-                  processed through our system, and the total funds will be held
-                  by us until the event concludes. After the event, all payments
-                  will be automatically transferred to your Digital K'elal
-                  wallet, from which you can then transfer funds to an external
-                  account.
-                </p>
-                <p className="mt-2">
-                  Funds will be released automatically after you end the event
-                  on the admin page. All ticket data will be synchronized with
-                  the Members App."
+                  Your event will be fully integrated with the Members App
+                  ticketing system. All ticket data will be synchronized
+                  automatically.
                 </p>
                 <p className="mt-2 font-semibold">
-                  Your event will be fully integrated with the Members App
-                  ticketing system.
+                  Payment features will be available in Stage 2 of our
+                  development.
                 </p>
               </div>
             </div>

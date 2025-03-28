@@ -1,287 +1,462 @@
 import React, { useState, useEffect } from "react";
-import { useParams, Link } from "react-router-dom";
-import { Button } from "@/components/ui/button";
-import PageLayout from "@/components/PageLayout";
-import EventCard from "@/components/EventCard";
+import { useParams, Link, useNavigate } from "react-router-dom";
+import { ChevronLeft } from "lucide-react";
+import EventCard from "../components/EventCard";
+import { Button } from "../components/ui/button";
+import PageLayout from "../components/PageLayout";
+import CategoryButton from "../components/CategoryButton";
 
-interface CategoryEventsProps {
-  categoryParam?: string;
+interface Event {
+  id: string;
+  title: string;
+  date: string;
+  time: string;
+  location: string;
+  imageUrl: string;
+  price: number;
+  category: string;
 }
 
-const CategoryEvents: React.FC<CategoryEventsProps> = ({ categoryParam }) => {
-  const params = useParams<{ category: string }>();
-  // Use the prop if provided (for storyboards), otherwise use the URL param
-  const category = categoryParam || params.category;
-  const decodedCategory = category
-    ? decodeURIComponent(category)
-    : "ALL EVENTS";
+const CategoryEvents = () => {
+  const { category } = useParams<{ category: string }>();
+  const navigate = useNavigate();
+  const [events, setEvents] = useState<Event[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const [activeCategory, setActiveCategory] = useState<string>(decodedCategory);
+  // Demo events for each category
+  const demoEventsByCategory: Record<string, Event[]> = {
+    "ALL EVENTS": [
+      {
+        id: "all-1",
+        title: "Weekend Festival",
+        date: "2023-10-15",
+        time: "14:00",
+        location: "City Center",
+        imageUrl:
+          "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800&q=80",
+        price: 0,
+        category: "ALL EVENTS",
+      },
+      {
+        id: "all-2",
+        title: "Tech Conference",
+        date: "2023-10-20",
+        time: "09:00",
+        location: "Convention Center",
+        imageUrl:
+          "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=800&q=80",
+        price: 50,
+        category: "ALL EVENTS",
+      },
+    ],
+    MUSIC: [
+      {
+        id: "music-1",
+        title: "Summer Music Festival",
+        date: "2023-07-15",
+        time: "18:00",
+        location: "Central Park",
+        imageUrl:
+          "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800&q=80",
+        price: 25,
+        category: "MUSIC",
+      },
+      {
+        id: "music-2",
+        title: "Jazz Night",
+        date: "2023-07-20",
+        time: "20:00",
+        location: "Blue Note Club",
+        imageUrl:
+          "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800&q=80",
+        price: 15,
+        category: "MUSIC",
+      },
+      {
+        id: "music-3",
+        title: "Rock Concert",
+        date: "2023-07-25",
+        time: "19:00",
+        location: "Stadium Arena",
+        imageUrl:
+          "https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?w=800&q=80",
+        price: 30,
+        category: "MUSIC",
+      },
+      {
+        id: "music-4",
+        title: "EDM Party",
+        date: "2023-07-30",
+        time: "22:00",
+        location: "Nightclub Downtown",
+        imageUrl:
+          "https://images.unsplash.com/photo-1571266752264-7a0fea01df2b?w=800&q=80",
+        price: 20,
+        category: "MUSIC",
+      },
+    ],
+    NIGHTLIFE: [
+      {
+        id: "nightlife-1",
+        title: "Club Night",
+        date: "2023-08-05",
+        time: "23:00",
+        location: "XO Club",
+        imageUrl:
+          "https://images.unsplash.com/photo-1566737236500-c8ac43014a67?w=800&q=80",
+        price: 15,
+        category: "NIGHTLIFE",
+      },
+      {
+        id: "nightlife-2",
+        title: "Rooftop Party",
+        date: "2023-08-12",
+        time: "21:00",
+        location: "Sky Lounge",
+        imageUrl:
+          "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=800&q=80",
+        price: 20,
+        category: "NIGHTLIFE",
+      },
+    ],
+    "ARTS & CULTURE": [
+      {
+        id: "arts-1",
+        title: "Art Exhibition",
+        date: "2023-09-10",
+        time: "10:00",
+        location: "Modern Art Gallery",
+        imageUrl:
+          "https://images.unsplash.com/photo-1594122230689-45899d9e6f69?w=800&q=80",
+        price: 10,
+        category: "ARTS & CULTURE",
+      },
+      {
+        id: "arts-2",
+        title: "Cultural Festival",
+        date: "2023-09-15",
+        time: "11:00",
+        location: "Heritage Park",
+        imageUrl:
+          "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6c3?w=800&q=80",
+        price: 0,
+        category: "ARTS & CULTURE",
+      },
+    ],
+    FESTIVALS: [
+      {
+        id: "festival-1",
+        title: "Food Festival",
+        date: "2023-10-01",
+        time: "12:00",
+        location: "City Square",
+        imageUrl:
+          "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800&q=80",
+        price: 5,
+        category: "FESTIVALS",
+      },
+      {
+        id: "festival-2",
+        title: "Film Festival",
+        date: "2023-10-05",
+        time: "16:00",
+        location: "Cinema Complex",
+        imageUrl:
+          "https://images.unsplash.com/photo-1478720568477-152d9b164e26?w=800&q=80",
+        price: 15,
+        category: "FESTIVALS",
+      },
+    ],
+    BUSINESS: [
+      {
+        id: "business-1",
+        title: "Startup Conference",
+        date: "2023-11-10",
+        time: "09:00",
+        location: "Business Center",
+        imageUrl:
+          "https://images.unsplash.com/photo-1556761175-5973dc0f32e7?w=800&q=80",
+        price: 50,
+        category: "BUSINESS",
+      },
+      {
+        id: "business-2",
+        title: "Networking Event",
+        date: "2023-11-15",
+        time: "18:00",
+        location: "Grand Hotel",
+        imageUrl:
+          "https://images.unsplash.com/photo-1556761175-b413da4baf72?w=800&q=80",
+        price: 20,
+        category: "BUSINESS",
+      },
+    ],
+    NETWORKING: [
+      {
+        id: "networking-1",
+        title: "Tech Meetup",
+        date: "2023-12-01",
+        time: "19:00",
+        location: "Innovation Hub",
+        imageUrl:
+          "https://images.unsplash.com/photo-1528605248644-14dd04022da1?w=800&q=80",
+        price: 0,
+        category: "NETWORKING",
+      },
+      {
+        id: "networking-2",
+        title: "Career Fair",
+        date: "2023-12-05",
+        time: "10:00",
+        location: "University Campus",
+        imageUrl:
+          "https://images.unsplash.com/photo-1560439514-4e9645039924?w=800&q=80",
+        price: 0,
+        category: "NETWORKING",
+      },
+    ],
+    SPORTS: [
+      {
+        id: "sports-1",
+        title: "Marathon",
+        date: "2024-01-10",
+        time: "07:00",
+        location: "City Streets",
+        imageUrl:
+          "https://images.unsplash.com/photo-1530549387789-4c1017266635?w=800&q=80",
+        price: 25,
+        category: "SPORTS",
+      },
+      {
+        id: "sports-2",
+        title: "Basketball Tournament",
+        date: "2024-01-15",
+        time: "14:00",
+        location: "Sports Arena",
+        imageUrl:
+          "https://images.unsplash.com/photo-1546519638-68e109acd27d?w=800&q=80",
+        price: 10,
+        category: "SPORTS",
+      },
+    ],
+    SCHOOL: [
+      {
+        id: "school-1",
+        title: "Graduation Ceremony",
+        date: "2024-02-01",
+        time: "10:00",
+        location: "University Hall",
+        imageUrl:
+          "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=800&q=80",
+        price: 0,
+        category: "SCHOOL",
+      },
+      {
+        id: "school-2",
+        title: "School Fair",
+        date: "2024-02-05",
+        time: "12:00",
+        location: "School Grounds",
+        imageUrl:
+          "https://images.unsplash.com/photo-1509062522246-3755977927d7?w=800&q=80",
+        price: 5,
+        category: "SCHOOL",
+      },
+    ],
+  };
 
   useEffect(() => {
-    setActiveCategory(decodedCategory);
-  }, [decodedCategory]);
+    // Simulate fetching events by category
+    const fetchEvents = async () => {
+      // In a real app, this would be an API call
+      setTimeout(() => {
+        const mockEvents: Event[] = [
+          {
+            id: "1",
+            title: "Summer Music Festival",
+            date: "2023-07-15",
+            time: "18:00",
+            location: "Central Park",
+            imageUrl:
+              "https://images.unsplash.com/photo-1501281668745-f7f57925c3b4?w=800&q=80",
+            price: 25,
+            category: "music",
+          },
+          {
+            id: "2",
+            title: "Jazz Night",
+            date: "2023-07-20",
+            time: "20:00",
+            location: "Blue Note Club",
+            imageUrl:
+              "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=800&q=80",
+            price: 15,
+            category: "music",
+          },
+          {
+            id: "3",
+            title: "Rock Concert",
+            date: "2023-07-25",
+            time: "19:00",
+            location: "Stadium Arena",
+            imageUrl:
+              "https://images.unsplash.com/photo-1540039155733-5bb30b53aa14?w=800&q=80",
+            price: 30,
+            category: "music",
+          },
+          {
+            id: "4",
+            title: "EDM Party",
+            date: "2023-07-30",
+            time: "22:00",
+            location: "Nightclub Downtown",
+            imageUrl:
+              "https://images.unsplash.com/photo-1571266752264-7a0fea01df2b?w=800&q=80",
+            price: 20,
+            category: "music",
+          },
+        ];
 
-  // Categories for events
+        // Filter events by category, but if none found, we'll use demo events later
+        const filteredEvents = mockEvents.filter(
+          (event) => event.category.toLowerCase() === category?.toLowerCase(),
+        );
+        setEvents(filteredEvents);
+        setLoading(false);
+      }, 1000);
+    };
+
+    fetchEvents();
+  }, [category]);
+
+  // Get the normalized category name for lookup in demoEventsByCategory
+  const normalizedCategory = category?.toUpperCase() || "ALL EVENTS";
+
+  // Get demo events for this category or use ALL EVENTS as fallback
+  const demoEvents =
+    demoEventsByCategory[normalizedCategory] ||
+    demoEventsByCategory["ALL EVENTS"];
+
+  // Categories for the buttons
   const categories = [
-    "ALL EVENTS",
-    "MUSIC",
-    "FOOD & DRINKS",
-    "NIGHTLIFE",
-    "ARTS & CULTURE",
-    "SPORTS",
-    "BUSINESS",
-    "NETWORKING",
-    "FESTIVALS",
-    "SCHOOL",
+    { label: "All\nEVENTS", to: "/category/ALL%20EVENTS" },
+    {
+      label: "PARTIES",
+      to: "/category/NIGHTLIFE",
+      iconUrl: "https://kelalgateway.et/wp-content/uploads/2025/03/PARTIES.png",
+    },
+    {
+      label: "CONCERT",
+      to: "/category/MUSIC",
+      iconUrl: "https://kelalgateway.et/wp-content/uploads/2025/03/CONCERT.png",
+    },
+    {
+      label: "ACTIVITIES",
+      to: "/category/ARTS%20%26%20CULTURE",
+      iconUrl:
+        "https://kelalgateway.et/wp-content/uploads/2025/03/ACTIVITIES.png",
+    },
+    {
+      label: "FESTIVALS",
+      to: "/category/FESTIVALS",
+      iconUrl:
+        "https://kelalgateway.et/wp-content/uploads/2025/03/FESITIVALS3.webp",
+    },
+    {
+      label: "CONVENTIONS",
+      to: "/category/BUSINESS",
+      iconUrl:
+        "https://kelalgateway.et/wp-content/uploads/2025/03/CONVENTIONS.png",
+    },
+    {
+      label: "NETWORKING",
+      to: "/category/NETWORKING",
+      iconUrl:
+        "https://kelalgateway.et/wp-content/uploads/2025/03/NETWORKING.png",
+    },
+    {
+      label: "SPORTS",
+      to: "/category/SPORTS",
+      iconUrl: "https://kelalgateway.et/wp-content/uploads/2025/03/SPORTS.png",
+    },
+    { label: "SCHOOL", to: "/category/SCHOOL", icon: "🎓" },
   ];
-
-  // Demo events data with categories
-  const allEvents = [
-    {
-      id: 1,
-      image:
-        "https://images.unsplash.com/photo-1533174072545-7a4b6ad7a6a3?w=300&q=80",
-      title: "JULIAN MARLEY",
-      description: "Festival lovers, families, reggae lovers!!!",
-      date: "July 20",
-      time: "7:00 PM",
-      price: "FREE",
-      categories: ["MUSIC", "ARTS & CULTURE"],
-    },
-    {
-      id: 2,
-      image:
-        "https://images.unsplash.com/photo-1472653431158-6364773b2a56?w=300&q=80",
-      title: "LinkUp Bazaar",
-      description:
-        "Two-day bazaar and family festival with more than 85 vendors",
-      date: "Oct 22",
-      time: "9:00 AM",
-      price: "FREE",
-      categories: ["FOOD & DRINKS", "ARTS & CULTURE", "BUSINESS"],
-    },
-    {
-      id: 3,
-      image:
-        "https://images.unsplash.com/photo-1514525253161-7a46d19cd819?w=300&q=80",
-      title: "TGI Fridaze",
-      description: "The best Friday night party in town!",
-      date: "Aug 25",
-      time: "10:00 PM",
-      price: "FREE",
-      categories: ["NIGHTLIFE", "MUSIC"],
-    },
-    {
-      id: 4,
-      image:
-        "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=300&q=80",
-      title: "Addis Music Festival",
-      description:
-        "Annual music festival featuring top local and international artists",
-      date: "Sep 15",
-      time: "4:00 PM",
-      price: "FREE",
-      categories: ["MUSIC", "ARTS & CULTURE"],
-    },
-    {
-      id: 5,
-      image:
-        "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?w=300&q=80",
-      title: "Sunday Brunch",
-      description: "Gourmet brunch with unlimited mimosas",
-      date: "Oct 10",
-      time: "11:00 AM",
-      price: "FREE",
-      categories: ["FOOD & DRINKS"],
-    },
-    {
-      id: 6,
-      image:
-        "https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=300&q=80",
-      title: "Charity Run",
-      description: "5K run to support local education initiatives",
-      date: "Nov 5",
-      time: "7:00 AM",
-      price: "FREE",
-      categories: ["SPORTS", "CHARITY"],
-    },
-    {
-      id: 7,
-      image:
-        "https://images.unsplash.com/photo-1540575467063-178a50c2df87?w=300&q=80",
-      title: "Startup Networking",
-      description: "Connect with entrepreneurs and investors",
-      date: "Oct 18",
-      time: "6:00 PM",
-      price: "FREE",
-      categories: ["BUSINESS", "NETWORKING"],
-    },
-    {
-      id: 8,
-      image:
-        "https://images.unsplash.com/photo-1504674900247-0877df9cc836?w=300&q=80",
-      title: "Food Festival",
-      description: "Taste cuisines from around the world",
-      date: "Sep 30",
-      time: "12:00 PM",
-      price: "FREE",
-      categories: ["FOOD & DRINKS", "FESTIVALS"],
-    },
-    {
-      id: 9,
-      image:
-        "https://images.unsplash.com/photo-1459749411175-04bf5292ceea?w=300&q=80",
-      title: "Art Exhibition",
-      description: "Contemporary art from emerging Ethiopian artists",
-      date: "Aug 28",
-      time: "10:00 AM",
-      price: "FREE",
-      categories: ["ARTS & CULTURE"],
-    },
-    {
-      id: 10,
-      image:
-        "https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?w=300&q=80",
-      title: "Football Tournament",
-      description: "Annual charity football tournament",
-      date: "Nov 12",
-      time: "2:00 PM",
-      price: "FREE",
-      categories: ["SPORTS", "CHARITY"],
-    },
-    {
-      id: 11,
-      image:
-        "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=300&q=80",
-      title: "School Science Fair",
-      description: "Annual science fair showcasing student projects",
-      date: "Dec 5",
-      time: "9:00 AM",
-      price: "FREE",
-      categories: ["SCHOOL"],
-    },
-    {
-      id: 12,
-      image:
-        "https://images.unsplash.com/photo-1523580846011-d3a5bc25702b?w=300&q=80",
-      title: "Graduation Ceremony",
-      description: "University graduation ceremony",
-      date: "June 15",
-      time: "10:00 AM",
-      price: "FREE",
-      categories: ["SCHOOL"],
-    },
-  ];
-
-  // Filter events based on selected category
-  const filteredEvents =
-    activeCategory === "ALL EVENTS"
-      ? allEvents
-      : allEvents.filter((event) => event.categories.includes(activeCategory));
-
-  // Category icons mapping
-  const categoryIcons: Record<string, string> = {
-    "ALL EVENTS": "",
-    MUSIC: "🎤",
-    "FOOD & DRINKS": "🍽️",
-    NIGHTLIFE: "🕺",
-    "ARTS & CULTURE": "🎟️",
-    SPORTS: "⚽",
-    BUSINESS: "✖️",
-    NETWORKING: "🔗",
-    FESTIVALS: "🏠",
-    SCHOOL: "🎓",
-  };
 
   return (
     <PageLayout>
-      <main className="flex-1">
-        {/* Categories Section - Same as Home page */}
-        <section className="border-b border-gray-200 w-full bg-[#fefdfb] sticky top-[57px] z-10">
-          <div className="flex overflow-x-auto p-3 gap-2 scrollbar-hide w-full">
-            {categories.map((cat) => (
-              <Link
-                key={cat}
-                to={`/category/${encodeURIComponent(cat)}`}
-                className={`flex flex-col items-center justify-center w-[80px] h-[62px] border border-gray-300 rounded-lg mx-2 shadow-sm flex-shrink-0 ${activeCategory === cat ? "bg-[#0A1128] text-white" : "bg-white"}`}
-              >
-                <span className="text-1xl">{categoryIcons[cat]}</span>
-                <span className="text-xs mt-1 text-center block">
-                  {cat === "ALL EVENTS" ? "All Events" : cat}
-                </span>
-              </Link>
+      <div className="flex flex-col h-full bg-white">
+        <div className="sticky top-[67px] z-10 bg-white p-4 border-b">
+          <div className="flex items-center mb-4">
+            <Link to="/">
+              <Button variant="ghost" size="icon" className="mr-2">
+                <ChevronLeft className="h-5 w-5" />
+              </Button>
+            </Link>
+            <h1 className="text-1xl font-bold capitalize">{category} EVENTS</h1>
+          </div>
+
+          {/* Category Buttons */}
+          <div className="flex overflow-x-auto p-2 gap-2 scrollbar-hide w-full">
+            {categories.map((cat, index) => (
+              <CategoryButton
+                key={index}
+                to={cat.to}
+                label={cat.label}
+                icon={cat.icon}
+                iconUrl={cat.iconUrl}
+              />
             ))}
           </div>
           {/* Black Line */}
-          <div className="border-b border-black"></div>
-        </section>
-
-        <div className="p-4">
-          {/* Category Title */}
-          <div className="mb-6">
-            <h1 className="text-2xl font-bold">{activeCategory}</h1>
-            <p className="text-gray-600">
-              {filteredEvents.length}{" "}
-              {filteredEvents.length === 1 ? "event" : "events"} found
-            </p>
-          </div>
-
-          {/* Events List */}
-          <div className="space-y-3">
-            {filteredEvents.length > 0 ? (
-              <>
-                {filteredEvents.map((event, index) => (
-                  <React.Fragment key={event.id}>
-                    <Link
-                      to={`/event/${event.id}`}
-                      className="no-underline block mb-2"
-                    >
-                      <EventCard
-                        image={event.image}
-                        title={event.title}
-                        description={event.description}
-                        date={event.date}
-                        time={event.time}
-                        price={
-                          event.price === "FREE" ? (
-                            <span className="text-green-500 font-semibold">
-                              FREE
-                            </span>
-                          ) : (
-                            <span className="text-red-500 font-semibold">{`${event.price} ETB`}</span>
-                          )
-                        }
-                        onFollow={() =>
-                          console.log(`Following event: ${event.title}`)
-                        }
-                      />
-                    </Link>
-                    {index === 2 && (
-                      <div className="w-[380px] h-[90px] bg-yellow-100 border border-yellow-300 rounded mx-auto my-4 flex items-center justify-center">
-                        <p className="text-xs font-semibold text-yellow-800">
-                          SPONSORED
-                        </p>
-                      </div>
-                    )}
-                  </React.Fragment>
-                ))}
-              </>
-            ) : (
-              <div className="text-center py-8 bg-white rounded-lg shadow-sm">
-                <p className="text-gray-500">
-                  No events found in this category
-                </p>
-                <Link to="/category/ALL%20EVENTS">
-                  <Button className="mt-4 bg-[#0A1128]">
-                    Browse All Events
-                  </Button>
-                </Link>
-              </div>
-            )}
-          </div>
+          <div className="border-b border-black mt-2"></div>
         </div>
-      </main>
+
+        <div className="flex-1 overflow-auto p-4">
+          {loading ? (
+            <div className="flex justify-center items-center h-full">
+              <p>Loading events...</p>
+            </div>
+          ) : events.length > 0 ? (
+            <div className="grid grid-cols-1 gap-4">
+              {events.map((event) => (
+                <EventCard
+                  key={event.id}
+                  id={event.id}
+                  title={event.title}
+                  date={event.date}
+                  time={event.time}
+                  description={event.location}
+                  image={event.imageUrl}
+                  price={`${event.price} ETB`}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <div className="bg-yellow-50 p-3 rounded-lg border border-yellow-200 mb-4">
+                <p className="text-sm text-yellow-700">
+                  No real events found in this category. Showing demo events
+                  instead.
+                </p>
+              </div>
+              <div className="grid grid-cols-1 gap-4">
+                {demoEvents.map((event) => (
+                  <EventCard
+                    key={event.id}
+                    id={event.id}
+                    title={event.title}
+                    date={event.date}
+                    time={event.time}
+                    description={event.location}
+                    image={event.imageUrl}
+                    price={event.price === 0 ? "FREE" : `${event.price} ETB`}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
     </PageLayout>
   );
 };

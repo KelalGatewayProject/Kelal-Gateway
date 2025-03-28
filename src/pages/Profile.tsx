@@ -11,9 +11,9 @@ const Profile: React.FC = () => {
 
   // Fallback user data if profile is not set
   const user = userProfile || {
-    name: "Michel Damite",
-    city: "Addis Ababa", // Example city from registration
-    phone: "0984715947", // Example phone number
+    name: "MICHEL DAMITE",
+    city: "ADDIS ABABA",
+    phone: "0984715947",
     avatar: "https://imgur.com/zkK19cm.png",
   };
 
@@ -29,7 +29,7 @@ const Profile: React.FC = () => {
         <div className="p-6 text-center relative">
           {/* Settings Gear Icon */}
           <div className="absolute top-6 right-6">
-            <Link to="/app-settings" aria-label="Settings">
+            <Link to="/app-settings" aria-label="SETTINGS">
               <Settings className="h-6 w-6" />
             </Link>
           </div>
@@ -42,67 +42,77 @@ const Profile: React.FC = () => {
               className="w-full h-full object-cover"
             />
           </div>
-          <h1 className="text-3xl font-bold mt-6">{user.name}</h1>
-          <p className="text-lg opacity-80 mt-2">{user.city}</p>
+          <h1 className="text-3xl font-bold mt-6 uppercase">{user.name}</h1>
+          <p className="text-lg opacity-80 mt-2 uppercase">{user.city}</p>
           <div className="flex items-center justify-center mt-4">
-            <span className="font-bold text-xl">
-              Account No: {user.phone || "Not set"}
+            <span className="font-bold text-xl uppercase">
+              ACCOUNT NO: {user.phone || "NOT SET"}
             </span>
           </div>
         </div>
 
         {/* Preferences Section */}
         <div className="p-6 border border-gray-200 rounded-lg my-6 mx-4">
-          <h2 className="text-lg font-bold mb-4">Preferences</h2>
+          <h2 className="text-lg font-bold mb-4 uppercase">PREFERENCES</h2>
           <div className="space-y-6">
             <Link
               to="/organizers-following"
-              className="block text-sm hover:text-blue-500"
+              className="block text-sm hover:text-blue-500 uppercase"
             >
-              Organizers you follow
+              ORGANIZERS YOU FOLLOW
             </Link>
             <Link
               to="/manage-notifications"
-              className="block text-sm hover:text-blue-500"
+              className="block text-sm hover:text-blue-500 uppercase"
             >
-              Manage notifications
+              MANAGE NOTIFICATIONS
             </Link>
             <Link
               to="/linked-accounts"
-              className="block text-sm hover:text-blue-500"
+              className="block text-sm hover:text-blue-500 uppercase"
             >
-              Linked accounts
+              LINKED ACCOUNTS
             </Link>
             <Link
               to="/help-center"
-              className="block text-sm hover:text-blue-500"
+              className="block text-sm hover:text-blue-500 uppercase"
             >
-              Browse Help Center
+              BROWSE HELP CENTER
             </Link>
           </div>
         </div>
 
         {/* Legal Section */}
-        <div className="p-6 border border-gray-200 rounded-lg my-6 mx-4">
-          <h2 className="text-lg font-bold mb-4">Legal</h2>
-          <div className="space-y-6">
+        <div className="p-6 border border-gray-200 rounded-lg my-6 mx-4 bg-gray-50">
+          <h2 className="text-lg font-bold mb-4 uppercase">LEGAL</h2>
+          <div className="space-y-4">
             <Link
-              to="/terms-of-service"
-              className="block text-sm hover:text-blue-500"
+              to="https://kelalgateway.et/?page_id=13"
+              className="flex justify-between items-center text-sm hover:text-blue-500 py-2 border-b border-gray-100 uppercase"
             >
-              Terms of Service
-            </Link>
-            <Link to="/privacy" className="block text-sm hover:text-blue-500">
-              Privacy
+              <span>TERMS OF SERVICE</span>
+              <span className="text-gray-400">></span>
             </Link>
             <Link
-              to="/accessibility"
-              className="block text-sm hover:text-blue-500"
+              to="https://kelalgateway.et/?page_id=3"
+              className="flex justify-between items-center text-sm hover:text-blue-500 py-2 border-b border-gray-100 uppercase"
             >
-              Accessibility
+              <span>PRIVACY POLICY</span>
+              <span className="text-gray-400">></span>
             </Link>
-            <Link to="/cookies" className="block text-sm hover:text-blue-500">
-              Cookies
+            <Link
+              to="https://kelalgateway.et/?page_id=16"
+              className="flex justify-between items-center text-sm hover:text-blue-500 py-2 border-b border-gray-100 uppercase"
+            >
+              <span>TERMS & CONDITIONS</span>
+              <span className="text-gray-400">></span>
+            </Link>
+            <Link
+              to="https://kelalgateway.et/?page_id=19"
+              className="flex justify-between items-center text-sm hover:text-blue-500 py-2 uppercase"
+            >
+              <span>COOKIES POLICY</span>
+              <span className="text-gray-400">></span>
             </Link>
           </div>
         </div>
@@ -110,11 +120,11 @@ const Profile: React.FC = () => {
         {/* Sign Out Section */}
         <div className="p-4">
           <Button
-            className="w-full flex items-center justify-center gap-2"
+            className="w-full flex items-center justify-center gap-2 uppercase"
             onClick={handleSignOut}
           >
             <LogOut size={16} />
-            Sign out
+            SIGN OUT
           </Button>
         </div>
       </main>

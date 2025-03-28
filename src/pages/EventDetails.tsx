@@ -289,6 +289,8 @@ const EventDetails: React.FC = () => {
     // If it contains coordinates in the format "lat,lng", it will be processed in FreeEventPage
     // googleMapsApiKey will be provided later
     googleMapsApiKey: undefined, // Replace with actual API key when available
+    // Ensure all events are displayed as free during testing phase
+    ticketPrice: "FREE",
   };
 
   return <FreeEventPage {...processedEvent} />;

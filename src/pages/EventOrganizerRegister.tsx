@@ -8,6 +8,12 @@ import TopNavigation from "@/components/TopNavigation";
 import BottomNavigation from "@/components/BottomNavigation";
 import { useAuth } from "@/context/AuthContext";
 
+/**
+ * EventOrganizerRegister Component
+ *
+ * This component allows regular members to register as event organizers.
+ * It collects organization details and updates the user's role upon submission.
+ */
 const EventOrganizerRegister: React.FC = () => {
   const navigate = useNavigate();
   const { setUserRole } = useAuth();
@@ -20,6 +26,7 @@ const EventOrganizerRegister: React.FC = () => {
     contactPerson: "",
   });
 
+  // Handle form input changes
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
@@ -30,6 +37,7 @@ const EventOrganizerRegister: React.FC = () => {
     }));
   };
 
+  // Handle form submission
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 

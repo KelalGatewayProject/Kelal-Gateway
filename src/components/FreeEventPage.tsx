@@ -128,6 +128,42 @@ const FreeEventPage: React.FC<FreeEventPageProps> = ({
     onInterested();
   };
 
+  const handleShare = () => {
+    // App download link
+    const appDownloadLink =
+      "https://play.google.com/store/apps/details?id=com.yourapp"; // Replace with your actual app store link
+    const appDeepLink = "yourapp://event?id=123"; // Replace with your actual deep link scheme
+
+    // Create a rich description with all required details
+    const shareText = `
+🎉 EVENT: ${title}
+
+📝 DESCRIPTION: ${description.substring(0, 100)}${description.length > 100 ? "..." : ""}
+
+🗓️ DATE: ${eventDate}
+⏰ TIME: ${startTime} - ${endTime}
+📍 VENUE: ${venue}
+🎭 ORGANIZER: ${organizer}
+
+Open in app or download: ${appDownloadLink}
+`;
+
+    if (navigator.share) {
+      navigator
+        .share({
+          title: title,
+          text: shareText,
+          url: window.location.href,
+        })
+        .then(() => console.log("Successful share"))
+        .catch((error) => console.log("Error sharing:", error));
+    } else {
+      // Fallback for browsers that don't support the Web Share API
+      alert("Share this event:\n\n" + shareText + "\n" + window.location.href);
+    }
+    if (onShare) onShare();
+  };
+
   // Generate a random ticket number when component mounts
   useEffect(() => {
     setTicketNumber(Math.floor(10000000 + Math.random() * 90000000).toString());
@@ -184,7 +220,11 @@ const FreeEventPage: React.FC<FreeEventPageProps> = ({
               <Star className="h-4 w-4 mr-1" /> INTERESTED
             </Button>
           </div>
-          <Button variant="outline" className="rounded-full" onClick={onShare}>
+          <Button
+            variant="outline"
+            className="rounded-full"
+            onClick={handleShare}
+          >
             <Share className="h-4 w-4 mr-1" /> SHARE
           </Button>
         </div>
@@ -220,6 +260,12 @@ const FreeEventPage: React.FC<FreeEventPageProps> = ({
             >
               FREE TICKET
             </Button>
+          </div>
+          <div className="mt-3 bg-yellow-100 border-l-4 border-yellow-500 p-2 text-xs">
+            <p className="text-yellow-700">
+              🎉 We're launching with free events only during our testing phase!
+              Payment features coming soon in Stage 2.
+            </p>
           </div>
         </div>
 
