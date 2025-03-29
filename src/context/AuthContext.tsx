@@ -542,5 +542,5 @@ const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 };
 
 // Export the hook and provider
-export { useAuth };
+export { useAuth, AuthProvider };
 export default AuthProvider;
