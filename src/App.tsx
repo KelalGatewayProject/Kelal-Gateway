@@ -5,6 +5,7 @@ import NavigationDebugger from "./components/NavigationDebugger";
 import DebugOverlay from "./components/DebugOverlay";
 import NavigationFix from "./components/NavigationFix";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import NetworkErrorHandler from "./components/NetworkErrorHandler";
 
 // Lazy load pages
 const Welcome = lazy(() => import("./pages/Welcome"));
@@ -25,6 +26,7 @@ const MyTickets = lazy(() => import("./pages/MyTickets"));
 const Profile = lazy(() => import("./pages/Profile"));
 const TransferCredits = lazy(() => import("./pages/TransferCredits"));
 const VenuesAndClubs = lazy(() => import("./pages/VenuesAndClubs"));
+const SearchResults = lazy(() => import("./pages/SearchResults"));
 // Wallet page removed
 const CreateEvent = lazy(() => import("./pages/CreateEvent"));
 const CreateEventForm = lazy(() => import("./pages/CreateEventForm"));
@@ -229,6 +231,14 @@ function AppRoutes() {
           </ProtectedRoute>
         }
       />
+      <Route
+        path="/search"
+        element={
+          <ProtectedRoute>
+            <SearchResults />
+          </ProtectedRoute>
+        }
+      />
       {/* Wallet route removed */}
       <Route
         path="/category/:category"
@@ -365,21 +375,23 @@ function App() {
   }
 
   return (
-    <Suspense
-      fallback={
-        <div className="flex items-center justify-center h-screen bg-white">
-          <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
-        </div>
-      }
-    >
-      <AuthProvider>
-        <NavigationDebugger />
-        <DebugOverlay />
-        <NavigationFix />
-        <AppRoutes />
-        {import.meta.env.VITE_TEMPO && useRoutes(routes)}
-      </AuthProvider>
-    </Suspense>
+    <NetworkErrorHandler>
+      <Suspense
+        fallback={
+          <div className="flex items-center justify-center h-screen bg-white">
+            <div className="w-10 h-10 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+          </div>
+        }
+      >
+        <AuthProvider>
+          <NavigationDebugger />
+          <DebugOverlay />
+          <NavigationFix />
+          <AppRoutes />
+          {import.meta.env.VITE_TEMPO && useRoutes(routes)}
+        </AuthProvider>
+      </Suspense>
+    </NetworkErrorHandler>
   );
 }
 

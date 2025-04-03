@@ -6,11 +6,12 @@ import { NotificationDrawer } from "./NotificationDrawer";
 import SideMenu from "./SideMenu";
 import NotificationDetailDrawer from "./NotificationDetailDrawer";
 import { useAuth } from "../context/AuthContext";
+import { Input } from "@/components/ui/input";
 
 interface TopNavigationProps {
-  toggleSideMenu: () => void;
-  isNotificationDrawerOpen: boolean;
-  toggleNotificationDrawer: () => void;
+  toggleSideMenu?: () => void;
+  isNotificationDrawerOpen?: boolean;
+  toggleNotificationDrawer?: () => void;
   allNotifications?: Array<{
     id: string;
     title: string;
@@ -19,7 +20,8 @@ interface TopNavigationProps {
     read: boolean;
     hasPromotion?: boolean;
   }>;
-  openNotificationDetail: (notification: any) => void;
+  openNotificationDetail?: (notification: any) => void;
+  hideSearch?: boolean;
 }
 
 const TopNavigation: React.FC<TopNavigationProps> = ({
@@ -28,6 +30,7 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
   toggleNotificationDrawer,
   allNotifications = [],
   openNotificationDetail,
+  hideSearch = false,
 }) => {
   const navigate = useNavigate();
   const { isOrganizer, setUserRole, userRole, isAuthenticated } = useAuth();
@@ -39,9 +42,23 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
   const [viewMode, setViewMode] = useState<"member" | "organizer">(
     userRole === "organizer" ? "organizer" : "member",
   );
+  const [showSearchBar, setShowSearchBar] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const handleSearchClick = () => {
-    navigate("/search");
+    if (hideSearch) {
+      navigate("/search");
+    } else {
+      setShowSearchBar(true);
+    }
+  };
+
+  const handleSearchSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (searchQuery.trim()) {
+      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+      setShowSearchBar(false);
+    }
   };
 
   const handleLogoClick = () => {
@@ -49,11 +66,19 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
   };
 
   const handleToggleSideMenu = () => {
-    setIsSideMenuOpen(!isSideMenuOpen);
+    if (toggleSideMenu) {
+      toggleSideMenu();
+    } else {
+      setIsSideMenuOpen(!isSideMenuOpen);
+    }
   };
 
   const handleToggleNotification = () => {
-    setIsNotificationOpen(!isNotificationOpen);
+    if (toggleNotificationDrawer) {
+      toggleNotificationDrawer();
+    } else {
+      setIsNotificationOpen(!isNotificationOpen);
+    }
   };
 
   const handleCloseSideMenu = () => {
@@ -62,6 +87,10 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
 
   const handleCloseNotification = () => {
     setIsNotificationOpen(false);
+  };
+
+  const handleCloseSearchBar = () => {
+    setShowSearchBar(false);
   };
 
   const handleOpenNotificationDetail = (notification: any) => {
@@ -84,9 +113,13 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
       timestamp: notification.timestamp || new Date().toISOString(),
       read: notification.read !== undefined ? notification.read : false,
     };
-    setSelectedNotification(enhancedNotification);
-    setIsNotificationDetailOpen(true);
-    setIsNotificationOpen(false);
+    if (openNotificationDetail) {
+      openNotificationDetail(enhancedNotification);
+    } else {
+      setSelectedNotification(enhancedNotification);
+      setIsNotificationDetailOpen(true);
+      setIsNotificationOpen(false);
+    }
   };
 
   const handleCloseNotificationDetail = () => {
@@ -139,84 +172,112 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
 
   return (
     <>
-      <header className="fixed top-0 left-0 right-0 h-16 bg-white shadow-md z-40 flex items-center justify-between px-4">
-        {/* Kelal Logo - Far Left */}
-        <div className="flex items-center">
-          <button onClick={handleLogoClick} className="focus:outline-none">
-            <img
-              src="https://imgur.com/IblnJgd.png"
-              alt="Kelal Logo"
-              className="h-10 w-10 cursor-pointer hover:opacity-80 transition-opacity"
-            />
-          </button>
-        </div>
-
-        {/* Member/Organizer Toggle - Center */}
-        {isAuthenticated && isOrganizer && (
-          <div className="flex items-center justify-center">
-            <div className="flex bg-gray-100 rounded-full p-1">
+      <header className="fixed top-0 left-0 right-0 h-16 bg-white shadow-md z-40">
+        {showSearchBar ? (
+          <div className="p-3">
+            <form onSubmit={handleSearchSubmit} className="flex items-center">
+              <Input
+                type="text"
+                placeholder="SEARCH EVENTS, VENUES, ORGANIZERS..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="flex-1 font-['Roboto'] uppercase text-sm"
+                autoFocus
+              />
               <button
-                onClick={() => viewMode !== "member" && toggleViewMode()}
-                className={`flex items-center px-3 py-1 rounded-full text-sm font-medium transition-colors ${viewMode === "member" ? "bg-white shadow-sm text-gray-800" : "text-gray-500 hover:text-gray-700"}`}
+                type="button"
+                onClick={handleCloseSearchBar}
+                className="ml-2"
               >
-                <User className="h-4 w-4 mr-1" />
-                Member
+                <X className="h-6 w-6 text-gray-600" />
+              </button>
+            </form>
+          </div>
+        ) : (
+          <div className="flex justify-between items-center px-4">
+            {/* Kelal Logo - Far Left */}
+            <div className="flex items-center">
+              <button onClick={handleLogoClick} className="focus:outline-none">
+                <img
+                  src="https://imgur.com/IblnJgd.png"
+                  alt="Kelal Logo"
+                  className="h-10 w-10 cursor-pointer hover:opacity-80 transition-opacity"
+                />
+              </button>
+            </div>
+
+            {/* Member/Organizer Toggle - Center */}
+            {isAuthenticated && isOrganizer && (
+              <div className="flex items-center justify-center">
+                <div className="flex bg-gray-100 rounded-full p-1">
+                  <button
+                    onClick={() => viewMode !== "member" && toggleViewMode()}
+                    className={`flex items-center px-3 py-1 rounded-full text-sm font-medium transition-colors ${viewMode === "member" ? "bg-white shadow-sm text-gray-800" : "text-gray-500 hover:text-gray-700"}`}
+                  >
+                    <User className="h-4 w-4 mr-1" />
+                    Member
+                  </button>
+                  <button
+                    onClick={() => viewMode !== "organizer" && toggleViewMode()}
+                    className={`flex items-center px-3 py-1 rounded-full text-sm font-medium transition-colors ${viewMode === "organizer" ? "bg-white shadow-sm text-gray-800" : "text-gray-500 hover:text-gray-700"}`}
+                  >
+                    <Briefcase className="h-4 w-4 mr-1" />
+                    Organizer
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* Right Side Icons - Menu, Bell, Search */}
+            <div className="flex items-center space-x-2">
+              {!hideSearch && (
+                <button
+                  onClick={handleSearchClick}
+                  className="p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300"
+                  aria-label="Search"
+                >
+                  <Search className="h-6 w-6 text-gray-700" />
+                </button>
+              )}
+              <button
+                onClick={handleToggleNotification}
+                className="p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 relative"
+                aria-label="Notifications"
+              >
+                <Bell className="h-6 w-6 text-gray-700" />
+                {allNotifications?.some((n) => !n.read) && (
+                  <span className="absolute top-1 right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse"></span>
+                )}
               </button>
               <button
-                onClick={() => viewMode !== "organizer" && toggleViewMode()}
-                className={`flex items-center px-3 py-1 rounded-full text-sm font-medium transition-colors ${viewMode === "organizer" ? "bg-white shadow-sm text-gray-800" : "text-gray-500 hover:text-gray-700"}`}
+                onClick={handleToggleSideMenu}
+                className="p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300"
+                aria-label="Open menu"
               >
-                <Briefcase className="h-4 w-4 mr-1" />
-                Organizer
+                <Menu className="h-6 w-6 text-gray-700" />
               </button>
             </div>
           </div>
         )}
-
-        {/* Right Side Icons - Menu, Bell, Search */}
-        <div className="flex items-center space-x-2">
-          <button
-            onClick={handleToggleSideMenu}
-            className="p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300"
-            aria-label="Open menu"
-          >
-            <Menu className="h-6 w-6 text-gray-700" />
-          </button>
-
-          <button
-            onClick={handleToggleNotification}
-            className="p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300 relative"
-            aria-label="Notifications"
-          >
-            <Bell className="h-6 w-6 text-gray-700" />
-            {allNotifications?.some((n) => !n.read) && (
-              <span className="absolute top-1 right-1 w-3 h-3 bg-red-500 rounded-full animate-pulse"></span>
-            )}
-          </button>
-
-          <button
-            onClick={handleSearchClick}
-            className="p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-300"
-            aria-label="Search"
-          >
-            <Search className="h-6 w-6 text-gray-700" />
-          </button>
-        </div>
       </header>
 
       {/* Side Menu */}
-      <SideMenu isOpen={isSideMenuOpen} onClose={handleCloseSideMenu} />
+      {!toggleSideMenu && (
+        <SideMenu isOpen={isSideMenuOpen} onClose={handleCloseSideMenu} />
+      )}
 
       {/* Notification Detail Drawer */}
-      <NotificationDetailDrawer
-        isOpen={isNotificationDetailOpen}
-        onClose={handleCloseNotificationDetail}
-        notification={selectedNotification}
-      />
+      {!openNotificationDetail && (
+        <NotificationDetailDrawer
+          isOpen={isNotificationDetailOpen}
+          onClose={handleCloseNotificationDetail}
+          notification={selectedNotification}
+        />
+      )}
 
       {/* Notification Drawer with exact specifications */}
       <AnimatePresence>
-        {isNotificationOpen && (
+        {isNotificationOpen && !toggleNotificationDrawer && (
           <div
             className="fixed inset-0 bg-black bg-opacity-50 z-50"
             onClick={handleCloseNotification}
@@ -234,7 +295,9 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
               onClick={(e) => e.stopPropagation()}
             >
               <div className="p-4 border-b flex justify-between items-center">
-                <h2 className="font-bold text-lg">NOTIFICATIONS</h2>
+                <h2 className="font-bold text-lg font-['Roboto'] uppercase">
+                  NOTIFICATIONS
+                </h2>
                 <button
                   onClick={handleCloseNotification}
                   className="rounded-[3%] p-1 hover:bg-gray-100"
@@ -257,7 +320,7 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
                         }
                       >
                         <div className="text-white">
-                          <p className="font-medium text-sm line-clamp-1">
+                          <p className="font-medium text-sm line-clamp-1 font-['Roboto'] uppercase">
                             {notification.title}
                           </p>
                           <p className="text-xs text-gray-300 line-clamp-2 mt-1">
@@ -299,8 +362,8 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
                       }
                     >
                       <div className="text-white">
-                        <p className="font-medium text-sm line-clamp-1">
-                          Free Drink Promotion!
+                        <p className="font-medium text-sm line-clamp-1 font-['Roboto'] uppercase">
+                          FREE DRINK PROMOTION!
                         </p>
                         <p className="text-xs text-gray-300 line-clamp-2 mt-1">
                           You've received a free drink promotion for tonight's
@@ -345,8 +408,8 @@ const TopNavigation: React.FC<TopNavigationProps> = ({
                       }
                     >
                       <div className="text-white">
-                        <p className="font-medium text-sm line-clamp-1">
-                          Staff Position Request
+                        <p className="font-medium text-sm line-clamp-1 font-['Roboto'] uppercase">
+                          STAFF POSITION REQUEST
                         </p>
                         <p className="text-xs text-gray-300 line-clamp-2 mt-1">
                           You've been invited to work as a Ticket Scanner at

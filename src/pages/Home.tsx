@@ -663,31 +663,39 @@ const Home: React.FC = () => {
               <CategoryButton to="/category/ALL%20EVENTS" label="All Events" />
               <CategoryButton
                 to="/category/NIGHTLIFE"
-                icon="🕺"
+                iconUrl="https://kelalgateway.et/wp-content/uploads/2025/03/PARTIES.png"
                 label="PARTIES"
               />
-              <CategoryButton to="/category/MUSIC" icon="🎤" label="CONCERT" />
+              <CategoryButton
+                to="/category/MUSIC"
+                iconUrl="https://kelalgateway.et/wp-content/uploads/2025/03/CONCERT.png"
+                label="CONCERT"
+              />
               <CategoryButton
                 to="/category/ARTS%20%26%20CULTURE"
-                icon="🎟️"
+                iconUrl="https://kelalgateway.et/wp-content/uploads/2025/03/ACTIVITIES.png"
                 label="ACTIVITIES"
               />
               <CategoryButton
                 to="/category/FESTIVALS"
-                icon="🏠"
+                iconUrl="https://kelalgateway.et/wp-content/uploads/2025/03/FESITIVALS3.webp"
                 label="FESTIVALS"
               />
               <CategoryButton
                 to="/category/BUSINESS"
-                icon="✖️"
+                iconUrl="https://kelalgateway.et/wp-content/uploads/2025/03/CONVENTIONS.png"
                 label="CONVENTIONS"
               />
               <CategoryButton
                 to="/category/NETWORKING"
-                icon="🔗"
+                iconUrl="https://kelalgateway.et/wp-content/uploads/2025/03/NETWORKING.png"
                 label="NETWORKING"
               />
-              <CategoryButton to="/category/SPORTS" icon="⚽" label="SPORTS" />
+              <CategoryButton
+                to="/category/SPORTS"
+                iconUrl="https://kelalgateway.et/wp-content/uploads/2025/03/SPORTS.png"
+                label="SPORTS"
+              />
               <CategoryButton to="/category/SCHOOL" icon="🎓" label="SCHOOL" />
             </div>
             {/* Black Line */}

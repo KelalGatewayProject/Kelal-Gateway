@@ -1073,7 +1073,7 @@ const CreateEventForm: React.FC = () => {
                       className="mr-2"
                       style={{ touchAction: "manipulation" }}
                     />
-                    <span className="font-bold">Under 21</span>
+                    <span className="font-bold">Open To All</span>
                   </label>
                   <label className="flex items-center">
                     <input

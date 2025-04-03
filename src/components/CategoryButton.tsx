@@ -33,7 +33,7 @@ const CategoryButton: React.FC<CategoryButtonProps> = ({
       ) : icon ? (
         <span className="text-xl">{icon}</span>
       ) : null}
-      <span className="text-xs mt-1 text-center block font-medium">
+      <span className="text-xs mt-1 text-center block font-medium font-['Roboto'] uppercase">
         {label}
       </span>
     </div>
