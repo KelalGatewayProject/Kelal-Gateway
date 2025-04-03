@@ -8,18 +8,23 @@ const Welcome: React.FC = () => {
       {/* Header with Blue Background (75% of the screen) */}
       <div className="bg-[#0A1128] rounded-bl-[100px] h-[75vh] flex flex-col items-center justify-center relative">
         {/* Logo and Text */}
-        <div className="flex flex-col items-center justify-center space-y-4">
+        <div className="flex flex-col items-center justify-center space-y-4 text-center">
           <img
-            src="https://imgur.com/IblnJgd.png"
+            src="https://kelalgateway.et/wp-content/uploads/2025/03/cropped-Kelal-logo-2.png"
             alt="Logo"
-            className="w-24 h-24" // Adjust logo size as needed
+            className="w-28 h-24"
           />
           <h1 className="text-white text-2xl font-bold">Kelal Gateway</h1>
+          <p className="text-gray-300 text-lg">
+            Your Gateway to
+            <br />
+            <span className="font-semibold">Unforgettable Experiences</span>
+          </p>
         </div>
 
         {/* GET STARTED Button */}
         <div className="w-full px-6 absolute" style={{ bottom: "-100px" }}>
-          <Link to="/phone-login" className="w-full">
+          <Link to="/Phone-Login" className="w-full">
             <Button className="w-full bg-[#0A1128] hover:bg-[#0A1128]/90 text-white py-6 rounded-full">
               GET STARTED
             </Button>

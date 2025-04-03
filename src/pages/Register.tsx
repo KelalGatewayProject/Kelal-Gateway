@@ -35,9 +35,9 @@ export default function RegisterDetails() {
     // DEVELOPMENT ONLY: Skip validation and registration process
     // TODO: REMOVE BEFORE PRODUCTION
     console.log(
-      "DEV MODE: Skipping registration validation and proceeding to home",
+      "DEV MODE: Skipping registration validation and proceeding to profile setup",
     );
-    navigate("/");
+    navigate("/profile-setup");
     return;
 
     // Validate password match
@@ -47,8 +47,8 @@ export default function RegisterDetails() {
     }
 
     // Validate password strength
-    if (formData.password.length < 8) {
-      setError("Password must be at least 8 characters long");
+    if (formData.password.length < 6) {
+      setError("Password must be at least 6 characters long");
       return;
     }
 
@@ -108,9 +108,9 @@ export default function RegisterDetails() {
         {/* Logo and text */}
         <div className="flex flex-col items-center justify-center h-full">
           <img
-            src="https://imgur.com/IblnJgd.png"
+            src="https://kelalgateway.et/wp-content/uploads/2025/03/cropped-Kelal-logo-2.png"
             alt="KELAL GATEWAY"
-            className="w-24 h-24"
+            className="w-28 h-24"
           />
           <h1 className="text-xl font-bold text-center text-white mt-2">
             K'ELAL GATEWAY

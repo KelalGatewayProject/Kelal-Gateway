@@ -91,28 +91,28 @@ const Profile: React.FC = () => {
               className="flex justify-between items-center text-sm hover:text-blue-500 py-2 border-b border-gray-100 uppercase"
             >
               <span>TERMS OF SERVICE</span>
-              <span className="text-gray-400">></span>
+              <span className="text-gray-400">&gt;</span>
             </Link>
             <Link
               to="https://kelalgateway.et/?page_id=3"
               className="flex justify-between items-center text-sm hover:text-blue-500 py-2 border-b border-gray-100 uppercase"
             >
               <span>PRIVACY POLICY</span>
-              <span className="text-gray-400">></span>
+              <span className="text-gray-400">&gt;</span>
             </Link>
             <Link
               to="https://kelalgateway.et/?page_id=16"
               className="flex justify-between items-center text-sm hover:text-blue-500 py-2 border-b border-gray-100 uppercase"
             >
               <span>TERMS & CONDITIONS</span>
-              <span className="text-gray-400">></span>
+              <span className="text-gray-400">&gt;</span>
             </Link>
             <Link
               to="https://kelalgateway.et/?page_id=19"
               className="flex justify-between items-center text-sm hover:text-blue-500 py-2 uppercase"
             >
               <span>COOKIES POLICY</span>
-              <span className="text-gray-400">></span>
+              <span className="text-gray-400">&gt;</span>
             </Link>
           </div>
         </div>

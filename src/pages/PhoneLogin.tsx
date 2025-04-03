@@ -43,8 +43,7 @@ const PhoneLogin: React.FC = () => {
       if (process.env.NODE_ENV === "development" || true) {
         console.log("DEV MODE: Simulating OTP send to", phone);
         localStorage.setItem("userPhone", phone);
-        setStep("otp");
-        setExpiresAt(new Date(Date.now() + 10 * 60 * 1000)); // 10 minutes
+        navigate("/verify-code");
         setLoading(false);
         return;
       }

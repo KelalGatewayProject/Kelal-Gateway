@@ -20,7 +20,6 @@ const VerifyCode: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // In a real app, we would verify the code with a backend
-    // For now, just navigate to register page
     navigate("/register");
   };
 

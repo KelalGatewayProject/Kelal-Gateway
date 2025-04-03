@@ -137,11 +137,11 @@ const SideMenu: React.FC<SideMenuProps> = ({ isOpen, onClose }) => {
           <div className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center">
             <CreditCard className="h-5 w-5" />
           </div>
-          <span className="font-semibold">CREDITS</span>
+          <span className="font-semibold">WALLET</span>
         </div>
         <div
           className="flex items-center space-x-4 cursor-pointer"
-          onClick={() => handleNavigation("/credits")}
+          onClick={() => handleNavigation("/wallet")}
         >
           <div className="w-10 h-10 rounded-full border border-gray-300 flex items-center justify-center">
             <Award className="h-5 w-5" />
