@@ -2,7 +2,10 @@ services:
   - type: web
     name: kelal-gateway-backend
     env: docker
-    dockerfilePath: Dockerfile
+    dockerfilePath: ./backend/Dockerfile
+    healthCheckPath: /health
+    autoDeploy: true
+    branch: NewBach
     envVars:
       - key: NODE_ENV
         value: production
@@ -19,7 +22,7 @@ services:
       - key: JWT_REFRESH_EXPIRES_IN
         value: 30d
       - key: CORS_ORIGIN
-        value: https://kelal-gateway-frontend.onrender.com
+        value: https://kelal-gateway.onrender.com
       - key: RATE_LIMIT_WINDOW_MS
         value: 900000
       - key: RATE_LIMIT_MAX
@@ -28,8 +31,14 @@ services:
   - type: web
     name: kelal-gateway-frontend
     env: static
-    buildCommand: npm install && npm run render-build
-    staticPublishPath: ./dist
+    buildCommand: npm run render-build
+    staticPublishPath: dist
+    env: node
+    autoDeploy: true
+    branch: NewBach
+    envVars:
+      - key: VITE_API_URL
+        value: https://kelal-gateway-backend.onrender.com
     routes:
       - type: rewrite
         source: /*

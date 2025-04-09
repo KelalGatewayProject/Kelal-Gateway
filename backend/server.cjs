@@ -13,6 +13,11 @@ app.use(cors({
 
 app.use(express.json());
 
+// Health check endpoint for Render
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'ok' });
+});
+
 // Basic route for testing
 app.get('/', (req, res) => {
     res.json({ message: 'Kelal Gateway API is running' });
