@@ -19,4 +19,4 @@ ENV PORT=8080
 EXPOSE 8080
 
 # Start the application
-CMD ["node", "backend/server.js"]
+CMD ["node", "backend/server.cjs"]
