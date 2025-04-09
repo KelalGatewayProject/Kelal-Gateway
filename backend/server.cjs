@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const http = require('http');
 
 // Initialize Express app
 const app = express();
@@ -57,11 +58,29 @@ setTimeout(() => {
         console.log(`Listening on: 0.0.0.0:${PORT}`);
         console.log('Health check endpoint available at /health');
         
-        // Log initial health check
-        fetch(`http://localhost:${PORT}/health`)
-            .then(res => res.json())
-            .then(data => console.log('Initial health check response:', data))
-            .catch(err => console.error('Initial health check failed:', err));
+        // Log initial health check using http module instead of fetch
+        const options = {
+            hostname: '127.0.0.1',
+            port: PORT,
+            path: '/health',
+            method: 'GET'
+        };
+
+        const req = http.request(options, (res) => {
+            let data = '';
+            res.on('data', (chunk) => {
+                data += chunk;
+            });
+            res.on('end', () => {
+                console.log('Initial health check response:', data);
+            });
+        });
+
+        req.on('error', (err) => {
+            console.error('Initial health check failed:', err);
+        });
+
+        req.end();
     });
 
     // Handle cleanup
