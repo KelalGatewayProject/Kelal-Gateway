@@ -11,8 +11,8 @@ RUN mkdir -p logs
 # Install dependencies with a fallback for package-lock issues
 RUN npm install || npm install --no-package-lock
 
-# Create a simple fallback route in case the app fails
-RUN echo "// Fallback route" >> server.js && \
+# Add error handling to server.js
+RUN echo "// Error handling" >> server.js && \
     echo "process.on('uncaughtException', err => {" >> server.js && \
     echo "  console.error('Uncaught exception:', err);" >> server.js && \
     echo "  // Keep the process running" >> server.js && \
@@ -20,9 +20,10 @@ RUN echo "// Fallback route" >> server.js && \
 
 # Set environment variables
 ENV NODE_ENV=production
+ENV PORT=8080
 
 # Expose port
 EXPOSE 8080
 
-# Start the application
-CMD ["node", "server.js"]
+# Start the application with experimental modules flag
+CMD ["node", "--experimental-modules", "server.js"]

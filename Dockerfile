@@ -20,19 +20,22 @@ RUN mkdir -p dist && \
 ENV NODE_ENV=production
 ENV PORT=3000
 
-# Create server.js
-RUN echo 'const express = require("express");' > server.js && \
-    echo 'const path = require("path");' >> server.js && \
-    echo 'const app = express();' >> server.js && \
-    echo 'const PORT = process.env.PORT || 3000;' >> server.js && \
-    echo 'app.use(express.static("dist"));' >> server.js && \
-    echo 'app.get("*", (req, res) => {' >> server.js && \
-    echo '  res.sendFile(path.resolve(__dirname, "dist", "index.html"));' >> server.js && \
-    echo '});' >> server.js && \
+# Create server.cjs with ES module imports
+RUN echo 'import express from "express";' > server.cjs && \
+    echo 'import path from "path";' >> server.cjs && \
+    echo 'import { fileURLToPath } from "url";' >> server.cjs && \
+    echo 'const __filename = fileURLToPath(import.meta.url);' >> server.cjs && \
+    echo 'const __dirname = path.dirname(__filename);' >> server.cjs && \
+    echo 'const app = express();' >> server.cjs && \
+    echo 'const PORT = process.env.PORT || 3000;' >> server.cjs && \
+    echo 'app.use(express.static("dist"));' >> server.cjs && \
+    echo 'app.get("*", (req, res) => {' >> server.cjs && \
+    echo '  res.sendFile(path.resolve(__dirname, "dist", "index.html"));' >> server.cjs && \
+    echo '});' >> server.cjs && \
     echo 'app.listen(PORT, () => console.log(`Server running on port ${PORT}`));'
 
 # Expose port
 EXPOSE 3000
 
 # Start the application
-CMD ["node", "server.js"]
+CMD ["node", "server.cjs"]
