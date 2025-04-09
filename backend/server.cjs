@@ -85,9 +85,20 @@ setTimeout(() => {
 
     // Handle cleanup
     process.on('SIGTERM', () => {
-        console.log('SIGTERM received. Shutting down gracefully...');
+        console.log('SIGTERM received at:', new Date().toISOString());
+        console.log('Shutting down gracefully...');
         server.close(() => {
-            console.log('Server closed');
+            console.log('Server closed at:', new Date().toISOString());
+            process.exit(0);
+        });
+    });
+
+    // Handle SIGINT (Ctrl+C)
+    process.on('SIGINT', () => {
+        console.log('SIGINT received at:', new Date().toISOString());
+        console.log('Shutting down gracefully...');
+        server.close(() => {
+            console.log('Server closed at:', new Date().toISOString());
             process.exit(0);
         });
     });
@@ -101,6 +112,11 @@ process.on('uncaughtException', (err) => {
 // Handle unhandled rejections
 process.on('unhandledRejection', (err) => {
     console.error('Unhandled Rejection:', err);
+});
+
+// Log process events
+process.on('exit', (code) => {
+    console.log(`Process exiting with code ${code} at:`, new Date().toISOString());
 });
 
 module.exports = app;
