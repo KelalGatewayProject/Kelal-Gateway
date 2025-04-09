@@ -1,9 +1,8 @@
 services:
   - type: web
     name: kelal-gateway-backend
-    env: node
-    buildCommand: cd backend && npm install
-    startCommand: cd backend && node server.js
+    env: docker
+    dockerfilePath: ./backend/Dockerfile
     envVars:
       - key: NODE_ENV
         value: production
@@ -29,7 +28,7 @@ services:
   - type: web
     name: kelal-gateway-frontend
     env: static
-    buildCommand: npm install && npm run build
+    buildCommand: npm install && npm run render-build
     staticPublishPath: ./dist
     routes:
       - type: rewrite
