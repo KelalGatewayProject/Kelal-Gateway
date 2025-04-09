@@ -29,6 +29,8 @@ services:
         value: 900000
       - key: RATE_LIMIT_MAX
         value: 100
+    healthCheckTimeout: 60
+    startCommand: node backend/server.cjs
   
   - type: web
     name: kelal-gateway-frontend
