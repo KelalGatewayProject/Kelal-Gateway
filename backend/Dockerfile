@@ -1,15 +1,19 @@
-FROM node:18-alpine AS builder
+FROM node:18-alpine
+
 WORKDIR /app
+
+# Copy package files and install dependencies
 COPY package*.json ./
 RUN npm install
+
+# Copy source code
 COPY . .
-RUN npm run build  # Ensure this outputs to /app/dist
 
-FROM node:18-alpine
-WORKDIR /app
-COPY --from=builder /app/package*.json ./
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/node_modules ./node_modules
+# Set environment variables
+ENV NODE_ENV=production
 
-# Update this to match your actual entry file:
-CMD ["node", "dist/server.js"]  # Or your correct entry path
+# Expose port
+EXPOSE 8080
+
+# Start the application
+CMD ["node", "server.js"]
