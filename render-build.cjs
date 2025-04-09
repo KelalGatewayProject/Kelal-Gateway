@@ -5,8 +5,8 @@ execSync('npm install', { stdio: 'inherit' });
 
 console.log('Building application without TypeScript checks...');
 try {
-  // Skip the TypeScript compilation step and only run Vite
-  execSync('npx vite build', { stdio: 'inherit' });
+  // Skip the TypeScript compilation step and only run Vite with the CJS config
+  execSync('npx vite build --config vite.config.cjs', { stdio: 'inherit' });
   console.log('Build completed successfully!');
 } catch (error) {
   console.error('Build failed:', error);
