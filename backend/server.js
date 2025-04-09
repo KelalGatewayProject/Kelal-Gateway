@@ -78,47 +78,62 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Start server first, then connect to MongoDB
+// Get port from environment variable
 const PORT = process.env.PORT || 8080;
 
-// Connect to MongoDB first
-mongoose.connect(process.env.MONGODB_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-  authSource: 'admin',
-  retryWrites: true,
-  w: 'majority'
-})
-.then(() => {
-  logger.info('Connected to MongoDB successfully');
-  
-  // Start server only after MongoDB connection is established
-  const server = app.listen(PORT, () => {
-    logger.info(`Server running in ${process.env.NODE_ENV} mode on port ${PORT}`);
-  });
+// Start server and connect to MongoDB
+const startServer = async () => {
+  try {
+    // Connect to MongoDB
+    await mongoose.connect(process.env.MONGODB_URI, {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+      authSource: 'admin',
+      retryWrites: true,
+      w: 'majority'
+    });
+    
+    logger.info('Connected to MongoDB successfully');
 
-  // Handle unhandled promise rejections
-  process.on('unhandledRejection', (err) => {
-    logger.error('Unhandled Rejection:', err);
-    // Close server & exit process
-    server.close(() => process.exit(1));
-  });
+    // Start server
+    const server = app.listen(PORT, '0.0.0.0', () => {
+      logger.info(`Server is running on port ${PORT}`);
+      logger.info(`Environment: ${process.env.NODE_ENV}`);
+      logger.info(`Process ID: ${process.pid}`);
+      logger.info(`Listening on: 0.0.0.0:${PORT}`);
+    });
 
-  // Handle uncaught exceptions
-  process.on('uncaughtException', (err) => {
-    logger.error('Uncaught Exception:', err);
-    // Keep the process running
-  });
-})
-.catch(err => {
-  logger.error('MongoDB connection error:', err);
-  logger.error('Error details:', {
-    name: err.name,
-    message: err.message,
-    code: err.code,
-    codeName: err.codeName
-  });
-  process.exit(1);
+    // Handle cleanup
+    process.on('SIGTERM', () => {
+      logger.info('SIGTERM received. Shutting down gracefully...');
+      server.close(() => {
+        logger.info('Server closed');
+        mongoose.connection.close(false, () => {
+          logger.info('MongoDB connection closed');
+          process.exit(0);
+        });
+      });
+    });
+
+  } catch (error) {
+    logger.error('Startup error:', error);
+    process.exit(1);
+  }
+};
+
+// Start the server
+startServer();
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (err) => {
+  logger.error('Uncaught Exception:', err);
+  // Log error and keep running
+});
+
+// Handle unhandled rejections
+process.on('unhandledRejection', (err) => {
+  logger.error('Unhandled Rejection:', err);
+  // Log error and keep running
 });
 
 module.exports = app;
