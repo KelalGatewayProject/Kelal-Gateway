@@ -2,37 +2,21 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Copy all files
-COPY . .
+# Copy package files
+COPY package*.json ./
 
 # Install dependencies
 RUN npm install
 
-# Create a simple express server 
-RUN npm install express
-
-# Try to build, but continue even if it fails
-RUN mkdir -p dist && \
-    echo '<!DOCTYPE html><html><head><title>Kelal Gateway</title></head><body><h1>Kelal Gateway</h1><p>Frontend placeholder. Build may be in progress.</p></body></html>' > dist/index.html && \
-    (npm run render-build || true)
+# Copy source code
+COPY . .
 
 # Set environment variables
 ENV NODE_ENV=production
-ENV PORT=3000
-
-# Create server.cjs with CommonJS
-RUN echo 'const express = require("express");' > server.cjs && \
-    echo 'const path = require("path");' >> server.cjs && \
-    echo 'const app = express();' >> server.cjs && \
-    echo 'const PORT = process.env.PORT || 3000;' >> server.cjs && \
-    echo 'app.use(express.static("dist"));' >> server.cjs && \
-    echo 'app.get("*", (req, res) => {' >> server.cjs && \
-    echo '  res.sendFile(path.resolve(__dirname, "dist", "index.html"));' >> server.cjs && \
-    echo '});' >> server.cjs && \
-    echo 'app.listen(PORT, () => console.log(`Server running on port ${PORT}`));'
+ENV PORT=8080
 
 # Expose port
-EXPOSE 3000
+EXPOSE 8080
 
 # Start the application
-CMD ["node", "server.cjs"]
+CMD ["node", "backend/server.js"]

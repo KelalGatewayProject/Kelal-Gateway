@@ -81,48 +81,22 @@ app.use((err, req, res, next) => {
 // Get port from environment variable
 const PORT = process.env.PORT || 8080;
 
-// Start server and connect to MongoDB
-const startServer = async () => {
-  try {
-    // Connect to MongoDB
-    await mongoose.connect(process.env.MONGODB_URI, {
-      useNewUrlParser: true,
-      useUnifiedTopology: true,
-      authSource: 'admin',
-      retryWrites: true,
-      w: 'majority'
+// Start server immediately
+const server = app.listen(PORT, '0.0.0.0', () => {
+    console.log(`Server is running on port ${PORT}`);
+    console.log(`Environment: ${process.env.NODE_ENV}`);
+    console.log(`Process ID: ${process.pid}`);
+    console.log(`Listening on: 0.0.0.0:${PORT}`);
+});
+
+// Handle cleanup
+process.on('SIGTERM', () => {
+    console.log('SIGTERM received. Shutting down gracefully...');
+    server.close(() => {
+        console.log('Server closed');
+        process.exit(0);
     });
-    
-    logger.info('Connected to MongoDB successfully');
-
-    // Start server
-    const server = app.listen(PORT, '0.0.0.0', () => {
-      logger.info(`Server is running on port ${PORT}`);
-      logger.info(`Environment: ${process.env.NODE_ENV}`);
-      logger.info(`Process ID: ${process.pid}`);
-      logger.info(`Listening on: 0.0.0.0:${PORT}`);
-    });
-
-    // Handle cleanup
-    process.on('SIGTERM', () => {
-      logger.info('SIGTERM received. Shutting down gracefully...');
-      server.close(() => {
-        logger.info('Server closed');
-        mongoose.connection.close(false, () => {
-          logger.info('MongoDB connection closed');
-          process.exit(0);
-        });
-      });
-    });
-
-  } catch (error) {
-    logger.error('Startup error:', error);
-    process.exit(1);
-  }
-};
-
-// Start the server
-startServer();
+});
 
 // Handle uncaught exceptions
 process.on('uncaughtException', (err) => {
