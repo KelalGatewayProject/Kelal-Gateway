@@ -20,12 +20,9 @@ RUN mkdir -p dist && \
 ENV NODE_ENV=production
 ENV PORT=3000
 
-# Create server.cjs with ES module imports
-RUN echo 'import express from "express";' > server.cjs && \
-    echo 'import path from "path";' >> server.cjs && \
-    echo 'import { fileURLToPath } from "url";' >> server.cjs && \
-    echo 'const __filename = fileURLToPath(import.meta.url);' >> server.cjs && \
-    echo 'const __dirname = path.dirname(__filename);' >> server.cjs && \
+# Create server.cjs with CommonJS
+RUN echo 'const express = require("express");' > server.cjs && \
+    echo 'const path = require("path");' >> server.cjs && \
     echo 'const app = express();' >> server.cjs && \
     echo 'const PORT = process.env.PORT || 3000;' >> server.cjs && \
     echo 'app.use(express.static("dist"));' >> server.cjs && \

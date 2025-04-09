@@ -2,7 +2,7 @@ services:
   - type: web
     name: kelal-gateway-backend
     env: docker
-    dockerfilePath: ./backend/Dockerfile
+    dockerfilePath: Dockerfile
     envVars:
       - key: NODE_ENV
         value: production
