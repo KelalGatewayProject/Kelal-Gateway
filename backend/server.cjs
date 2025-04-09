@@ -15,7 +15,12 @@ app.use(express.json());
 
 // Health check endpoint for Render
 app.get('/health', (req, res) => {
-    res.status(200).json({ status: 'ok' });
+    console.log('Health check requested');
+    res.status(200).json({ 
+        status: 'ok',
+        timestamp: new Date().toISOString(),
+        environment: process.env.NODE_ENV
+    });
 });
 
 // Basic route for testing
@@ -38,6 +43,7 @@ const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`Environment: ${process.env.NODE_ENV}`);
     console.log(`Process ID: ${process.pid}`);
     console.log(`Listening on: 0.0.0.0:${PORT}`);
+    console.log('Health check endpoint available at /health');
 });
 
 // Handle cleanup
@@ -47,6 +53,16 @@ process.on('SIGTERM', () => {
         console.log('Server closed');
         process.exit(0);
     });
+});
+
+// Handle uncaught exceptions
+process.on('uncaughtException', (err) => {
+    console.error('Uncaught Exception:', err);
+});
+
+// Handle unhandled rejections
+process.on('unhandledRejection', (err) => {
+    console.error('Unhandled Rejection:', err);
 });
 
 module.exports = app;
