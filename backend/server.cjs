@@ -16,12 +16,24 @@ app.use(express.json());
 
 // Health check endpoint for Render
 app.get('/health', (req, res) => {
+    const uptime = process.uptime();
+    const memoryUsage = process.memoryUsage();
     console.log('Health check requested at:', new Date().toISOString());
+    console.log('Memory usage:', {
+        rss: `${Math.round(memoryUsage.rss / 1024 / 1024)}MB`,
+        heapTotal: `${Math.round(memoryUsage.heapTotal / 1024 / 1024)}MB`,
+        heapUsed: `${Math.round(memoryUsage.heapUsed / 1024 / 1024)}MB`
+    });
     res.status(200).json({ 
         status: 'ok',
         timestamp: new Date().toISOString(),
         environment: process.env.NODE_ENV,
-        uptime: process.uptime()
+        uptime: uptime,
+        memory: {
+            rss: memoryUsage.rss,
+            heapTotal: memoryUsage.heapTotal,
+            heapUsed: memoryUsage.heapUsed
+        }
     });
 });
 
@@ -49,74 +61,76 @@ app.use((err, req, res, next) => {
 // Get port from environment variable
 const PORT = process.env.PORT || 8080;
 
-// Add startup delay
-console.log('Starting server with 5 second delay...');
-setTimeout(() => {
-    // Start server immediately
-    const server = app.listen(PORT, '0.0.0.0', () => {
-        console.log('Server startup complete at:', new Date().toISOString());
-        console.log(`Server is running on port ${PORT}`);
-        console.log(`Environment: ${process.env.NODE_ENV}`);
-        console.log(`Process ID: ${process.pid}`);
-        console.log(`Listening on: 0.0.0.0:${PORT}`);
-        console.log('Health check endpoint available at /health');
-        
-        // Log initial health check using http module instead of fetch
-        const options = {
-            hostname: '127.0.0.1',
-            port: PORT,
-            path: '/health',
-            method: 'GET'
-        };
+// Start server immediately
+const server = app.listen(PORT, '0.0.0.0', () => {
+    console.log('Server startup complete at:', new Date().toISOString());
+    console.log(`Server is running on port ${PORT}`);
+    console.log(`Environment: ${process.env.NODE_ENV}`);
+    console.log(`Process ID: ${process.pid}`);
+    console.log(`Listening on: 0.0.0.0:${PORT}`);
+    console.log('Health check endpoint available at /health');
+    
+    // Log initial health check using http module instead of fetch
+    const options = {
+        hostname: '127.0.0.1',
+        port: PORT,
+        path: '/health',
+        method: 'GET'
+    };
 
-        const req = http.request(options, (res) => {
-            let data = '';
-            res.on('data', (chunk) => {
-                data += chunk;
-            });
-            res.on('end', () => {
-                console.log('Initial health check response:', data);
-            });
+    const req = http.request(options, (res) => {
+        let data = '';
+        res.on('data', (chunk) => {
+            data += chunk;
         });
-
-        req.on('error', (err) => {
-            console.error('Initial health check failed:', err);
-        });
-
-        req.end();
-    });
-
-    // Keep-alive mechanism - log every 5 minutes
-    const keepAlive = setInterval(() => {
-        const uptime = process.uptime();
-        const hours = Math.floor(uptime / 3600);
-        const minutes = Math.floor((uptime % 3600) / 60);
-        const seconds = Math.floor(uptime % 60);
-        console.log(`Server status: Running for ${hours}h ${minutes}m ${seconds}s at ${new Date().toISOString()}`);
-    }, 300000); // Every 5 minutes
-
-    // Handle cleanup
-    process.on('SIGTERM', () => {
-        console.log('SIGTERM received at:', new Date().toISOString());
-        console.log('Shutting down gracefully...');
-        clearInterval(keepAlive);
-        server.close(() => {
-            console.log('Server closed at:', new Date().toISOString());
-            process.exit(0);
+        res.on('end', () => {
+            console.log('Initial health check response:', data);
         });
     });
 
-    // Handle SIGINT (Ctrl+C)
-    process.on('SIGINT', () => {
-        console.log('SIGINT received at:', new Date().toISOString());
-        console.log('Shutting down gracefully...');
-        clearInterval(keepAlive);
-        server.close(() => {
-            console.log('Server closed at:', new Date().toISOString());
-            process.exit(0);
-        });
+    req.on('error', (err) => {
+        console.error('Initial health check failed:', err);
     });
-}, 5000); // 5 second delay
+
+    req.end();
+});
+
+// Keep-alive mechanism - log every 5 minutes
+const keepAlive = setInterval(() => {
+    const uptime = process.uptime();
+    const hours = Math.floor(uptime / 3600);
+    const minutes = Math.floor((uptime % 3600) / 60);
+    const seconds = Math.floor(uptime % 60);
+    const memoryUsage = process.memoryUsage();
+    console.log(`Server status: Running for ${hours}h ${minutes}m ${seconds}s at ${new Date().toISOString()}`);
+    console.log('Memory usage:', {
+        rss: `${Math.round(memoryUsage.rss / 1024 / 1024)}MB`,
+        heapTotal: `${Math.round(memoryUsage.heapTotal / 1024 / 1024)}MB`,
+        heapUsed: `${Math.round(memoryUsage.heapUsed / 1024 / 1024)}MB`
+    });
+}, 300000); // Every 5 minutes
+
+// Handle cleanup
+process.on('SIGTERM', () => {
+    console.log('SIGTERM received at:', new Date().toISOString());
+    console.log('Shutting down gracefully...');
+    clearInterval(keepAlive);
+    server.close(() => {
+        console.log('Server closed at:', new Date().toISOString());
+        process.exit(0);
+    });
+});
+
+// Handle SIGINT (Ctrl+C)
+process.on('SIGINT', () => {
+    console.log('SIGINT received at:', new Date().toISOString());
+    console.log('Shutting down gracefully...');
+    clearInterval(keepAlive);
+    server.close(() => {
+        console.log('Server closed at:', new Date().toISOString());
+        process.exit(0);
+    });
+});
 
 // Handle uncaught exceptions
 process.on('uncaughtException', (err) => {
