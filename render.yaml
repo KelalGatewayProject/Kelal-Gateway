@@ -30,7 +30,7 @@ services:
       - key: RATE_LIMIT_MAX
         value: 100
     healthCheckTimeout: 60
-    startCommand: node backend/server.cjs
+    startCommand: pm2-runtime start server.cjs --name kelal-gateway
   
   - type: web
     name: kelal-gateway-frontend

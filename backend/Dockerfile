@@ -2,14 +2,15 @@ FROM node:18-alpine
 
 WORKDIR /app
 
-# Copy all files
+COPY package*.json ./
+
+RUN npm install -g pm2 && \
+    npm install
+
 COPY . .
 
 # Ensure logs directory exists
 RUN mkdir -p logs
-
-# Install dependencies with a fallback for package-lock issues
-RUN npm install || npm install --no-package-lock
 
 # Add error handling to server.js
 RUN echo "// Error handling" >> server.js && \
@@ -25,5 +26,5 @@ ENV PORT=8080
 # Expose port
 EXPOSE 8080
 
-# Start the application with experimental modules flag
-CMD ["node", "--experimental-modules", "server.js"]
+# Use PM2 to run the server
+CMD ["pm2-runtime", "start", "server.cjs", "--name", "kelal-gateway"]

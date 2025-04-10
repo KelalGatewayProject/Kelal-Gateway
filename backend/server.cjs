@@ -61,7 +61,7 @@ app.use((err, req, res, next) => {
 // Get port from environment variable
 const PORT = process.env.PORT || 8080;
 
-// Start server immediately
+// Start server
 const server = app.listen(PORT, '0.0.0.0', () => {
     console.log('Server startup complete at:', new Date().toISOString());
     console.log(`Server is running on port ${PORT}`);
@@ -70,7 +70,7 @@ const server = app.listen(PORT, '0.0.0.0', () => {
     console.log(`Listening on: 0.0.0.0:${PORT}`);
     console.log('Health check endpoint available at /health');
     
-    // Log initial health check using http module instead of fetch
+    // Log initial health check
     const options = {
         hostname: '127.0.0.1',
         port: PORT,
