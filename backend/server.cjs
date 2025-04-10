@@ -14,7 +14,12 @@ app.use(cors({
 
 app.use(express.json());
 
-// Health check endpoint for Render
+// Dedicated healthz endpoint for Render
+app.get('/healthz', (req, res) => {
+    res.status(200).send('OK');
+});
+
+// Health check endpoint for internal monitoring
 app.get('/health', (req, res) => {
     const timestamp = new Date().toISOString();
     console.log('Health check requested at:', timestamp);
@@ -33,14 +38,10 @@ app.get('/health', (req, res) => {
 
 // Basic route for testing
 app.get('/', (req, res) => {
-    const timestamp = new Date().toISOString();
-    console.log('Root endpoint requested at:', timestamp);
-    res.json({ 
+    res.status(200).json({ 
+        status: 'ok',
         message: 'Kelal Gateway API is running',
-        timestamp: timestamp,
-        uptime: process.uptime(),
-        environment: process.env.NODE_ENV,
-        processId: process.pid
+        timestamp: new Date().toISOString()
     });
 });
 
@@ -73,11 +74,11 @@ const server = app.listen(PORT, '0.0.0.0', () => {
 // Internal keep-alive mechanism - hit health endpoint every 2 minutes
 setInterval(() => {
     const options = {
-        hostname: '127.0.0.1', // Use IPv4 localhost
+        hostname: '127.0.0.1',
         port: PORT,
         path: '/health',
         method: 'GET',
-        timeout: 5000 // 5 second timeout
+        timeout: 5000
     };
 
     const req = http.request(options, (res) => {
@@ -107,7 +108,7 @@ setInterval(() => {
     });
 
     req.end();
-}, 120000); // Every 2 minutes
+}, 120000);
 
 // Keep-alive logging - log every 5 minutes
 setInterval(() => {
@@ -115,7 +116,7 @@ setInterval(() => {
     console.log(`Server status: Running for ${Math.floor(process.uptime())} seconds`);
     console.log(`Memory usage: ${Math.round(process.memoryUsage().heapUsed / 1024 / 1024)}MB`);
     console.log('==========================================');
-}, 300000); // Every 5 minutes
+}, 300000);
 
 // Handle cleanup
 process.on('SIGTERM', () => {
