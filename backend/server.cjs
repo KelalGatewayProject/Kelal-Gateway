@@ -27,10 +27,13 @@ app.get('/health', (req, res) => {
 
 // Basic route for testing
 app.get('/', (req, res) => {
-    console.log('Root endpoint requested');
+    console.log('Root endpoint requested at:', new Date().toISOString());
+    console.log('Request headers:', req.headers);
     res.json({ 
         message: 'Kelal Gateway API is running',
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        uptime: process.uptime(),
+        environment: process.env.NODE_ENV
     });
 });
 
@@ -83,10 +86,16 @@ setTimeout(() => {
         req.end();
     });
 
+    // Keep-alive mechanism
+    const keepAlive = setInterval(() => {
+        console.log('Keep-alive ping at:', new Date().toISOString());
+    }, 30000); // Every 30 seconds
+
     // Handle cleanup
     process.on('SIGTERM', () => {
         console.log('SIGTERM received at:', new Date().toISOString());
         console.log('Shutting down gracefully...');
+        clearInterval(keepAlive);
         server.close(() => {
             console.log('Server closed at:', new Date().toISOString());
             process.exit(0);
@@ -97,6 +106,7 @@ setTimeout(() => {
     process.on('SIGINT', () => {
         console.log('SIGINT received at:', new Date().toISOString());
         console.log('Shutting down gracefully...');
+        clearInterval(keepAlive);
         server.close(() => {
             console.log('Server closed at:', new Date().toISOString());
             process.exit(0);
