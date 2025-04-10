@@ -38,19 +38,32 @@ app.get('/healthz', (req, res) => {
 
 // Health check endpoint for internal monitoring
 app.get('/health', (req, res) => {
-    const timestamp = new Date().toISOString();
-    console.log('Health check requested at:', timestamp);
-    res.status(200).json({ 
-        status: 'ok',
-        timestamp: timestamp,
-        environment: process.env.NODE_ENV,
-        uptime: process.uptime(),
-        processId: process.pid,
-        memory: {
-            heapUsed: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
-            heapTotal: Math.round(process.memoryUsage().heapTotal / 1024 / 1024)
-        }
-    });
+    try {
+        const timestamp = new Date().toISOString();
+        const memoryUsage = process.memoryUsage();
+        const healthData = { 
+            status: 'ok',
+            timestamp: timestamp,
+            environment: process.env.NODE_ENV || 'development',
+            uptime: process.uptime(),
+            processId: process.pid,
+            memory: {
+                heapUsed: Math.round(memoryUsage.heapUsed / 1024 / 1024),
+                heapTotal: Math.round(memoryUsage.heapTotal / 1024 / 1024),
+                rss: Math.round(memoryUsage.rss / 1024 / 1024)
+            }
+        };
+        
+        console.log('Health check requested at:', timestamp, 'Data:', healthData);
+        res.status(200).json(healthData);
+    } catch (error) {
+        console.error('Health check failed:', error);
+        res.status(500).json({
+            status: 'error',
+            timestamp: new Date().toISOString(),
+            error: error.message
+        });
+    }
 });
 
 // Basic route for testing
@@ -60,6 +73,19 @@ app.get('/', (req, res) => {
         message: 'Kelal Gateway API is running',
         timestamp: new Date().toISOString()
     });
+});
+
+// Monitoring routes
+app.post('/api/monitoring/metrics', (req, res) => {
+    const metrics = req.body;
+    console.log('Performance Metrics:', metrics);
+    res.sendStatus(200);
+});
+
+app.post('/api/monitoring/logs', (req, res) => {
+    const logs = req.body;
+    console.log('Application Logs:', logs);
+    res.sendStatus(200);
 });
 
 // Error handling
