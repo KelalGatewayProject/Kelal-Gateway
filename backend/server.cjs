@@ -73,18 +73,37 @@ const server = app.listen(PORT, '0.0.0.0', () => {
 // Internal keep-alive mechanism - hit health endpoint every 2 minutes
 setInterval(() => {
     const options = {
-        hostname: 'localhost',
+        hostname: '127.0.0.1', // Use IPv4 localhost
         port: PORT,
         path: '/health',
-        method: 'GET'
+        method: 'GET',
+        timeout: 5000 // 5 second timeout
     };
 
     const req = http.request(options, (res) => {
-        console.log('Internal health check status:', res.statusCode);
+        let data = '';
+        res.on('data', (chunk) => {
+            data += chunk;
+        });
+        res.on('end', () => {
+            console.log('Internal health check successful:', {
+                statusCode: res.statusCode,
+                data: JSON.parse(data)
+            });
+        });
     });
 
     req.on('error', (error) => {
-        console.error('Internal health check failed:', error);
+        console.error('Internal health check failed:', {
+            error: error.message,
+            code: error.code,
+            timestamp: new Date().toISOString()
+        });
+    });
+
+    req.on('timeout', () => {
+        console.error('Internal health check timed out');
+        req.destroy();
     });
 
     req.end();
