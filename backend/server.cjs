@@ -86,10 +86,14 @@ setTimeout(() => {
         req.end();
     });
 
-    // Keep-alive mechanism
+    // Keep-alive mechanism - log every 5 minutes
     const keepAlive = setInterval(() => {
-        console.log('Keep-alive ping at:', new Date().toISOString());
-    }, 30000); // Every 30 seconds
+        const uptime = process.uptime();
+        const hours = Math.floor(uptime / 3600);
+        const minutes = Math.floor((uptime % 3600) / 60);
+        const seconds = Math.floor(uptime % 60);
+        console.log(`Server status: Running for ${hours}h ${minutes}m ${seconds}s at ${new Date().toISOString()}`);
+    }, 300000); // Every 5 minutes
 
     // Handle cleanup
     process.on('SIGTERM', () => {
