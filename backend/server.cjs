@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
+const http = require('http');
 
 // Initialize Express app
 const app = express();
@@ -15,22 +16,28 @@ app.use(express.json());
 
 // Health check endpoint for Render
 app.get('/health', (req, res) => {
-    console.log('Health check requested at:', new Date().toISOString());
+    const timestamp = new Date().toISOString();
+    console.log('Health check requested at:', timestamp);
     res.status(200).json({ 
         status: 'ok',
-        timestamp: new Date().toISOString(),
+        timestamp: timestamp,
         environment: process.env.NODE_ENV,
         uptime: process.uptime(),
-        processId: process.pid
+        processId: process.pid,
+        memory: {
+            heapUsed: Math.round(process.memoryUsage().heapUsed / 1024 / 1024),
+            heapTotal: Math.round(process.memoryUsage().heapTotal / 1024 / 1024)
+        }
     });
 });
 
 // Basic route for testing
 app.get('/', (req, res) => {
-    console.log('Root endpoint requested at:', new Date().toISOString());
+    const timestamp = new Date().toISOString();
+    console.log('Root endpoint requested at:', timestamp);
     res.json({ 
         message: 'Kelal Gateway API is running',
-        timestamp: new Date().toISOString(),
+        timestamp: timestamp,
         uptime: process.uptime(),
         environment: process.env.NODE_ENV,
         processId: process.pid
@@ -63,7 +70,27 @@ const server = app.listen(PORT, '0.0.0.0', () => {
     console.log('==========================================');
 });
 
-// Keep-alive mechanism - log every 5 minutes
+// Internal keep-alive mechanism - hit health endpoint every 2 minutes
+setInterval(() => {
+    const options = {
+        hostname: 'localhost',
+        port: PORT,
+        path: '/health',
+        method: 'GET'
+    };
+
+    const req = http.request(options, (res) => {
+        console.log('Internal health check status:', res.statusCode);
+    });
+
+    req.on('error', (error) => {
+        console.error('Internal health check failed:', error);
+    });
+
+    req.end();
+}, 120000); // Every 2 minutes
+
+// Keep-alive logging - log every 5 minutes
 setInterval(() => {
     console.log('==========================================');
     console.log(`Server status: Running for ${Math.floor(process.uptime())} seconds`);
