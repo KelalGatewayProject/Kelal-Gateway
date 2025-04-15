@@ -3,6 +3,18 @@
 @tailwind utilities;
 
 @layer base {
+  html {
+    @apply antialiased;
+  }
+  
+  body {
+    @apply bg-white text-gray-900 dark:bg-gray-900 dark:text-white;
+  }
+
+  * {
+    @apply border-secondary-200;
+  }
+
   :root {
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
@@ -66,57 +78,22 @@
   }
 }
 
-@layer base {
-  * {
-    @apply border-border;
+@layer components {
+  .btn {
+    @apply px-4 py-2 rounded-md font-medium transition-colors duration-200;
   }
-  body {
-    @apply bg-background text-foreground;
+  
+  .btn-primary {
+    @apply bg-primary-600 text-white hover:bg-primary-700;
   }
-  /* Add solid white background and drop shadow to all containers */
-  .card,
-  .dialog-content,
-  .popover-content,
-  .drawer-content,
-  .sheet-content,
-  .dropdown-menu-content,
-  .hover-card-content,
-  .alert-dialog-content,
-  .command-dialog,
-  .select-content,
-  .navigation-menu-content,
-  .menubar-content,
-  .context-menu-content,
-  [class*="bg-card"],
-  [class*="bg-popover"],
-  [class*="bg-background"] {
-    @apply bg-white shadow-[0_4px_8px_rgba(0,0,0,0.1)];
+  
+  .btn-secondary {
+    @apply bg-secondary-600 text-white hover:bg-secondary-700;
   }
 }
 
 @layer utilities {
-  .scrollbar-hide {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+  .text-balance {
+    text-wrap: balance;
   }
-  .scrollbar-hide::-webkit-scrollbar {
-    display: none;
-  }
-}
-
-/* Custom styles */
-a.no-underline {
-  text-decoration: none;
-  color: inherit;
-}
-
-a.no-underline:hover {
-  text-decoration: none;
-  color: inherit;
-}
-
-/* Container styles */
-.container-style {
-  background-color: white;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }

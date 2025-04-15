@@ -1,77 +1,100 @@
-# Kelal Gateway - Mobile Ticketing System
+# Kelal Gateway
 
-A comprehensive mobile application that allows event organizers to create events, sell tickets, and validate attendees through QR code scanning, while providing attendees with a seamless ticket purchasing and event check-in experience.
+A modern event ticketing and management platform built with React, Vite, and Tailwind CSS.
 
 ## Features
 
-- **Event Creation Dashboard** - Allow organizers to create events with details, pricing tiers, and capacity limits
-- **Ticket Purchase Flow** - Simple checkout process with secure payment integration
-- **QR Code Generation** - Unique QR codes for each ticket that can be saved to device wallet
-- **Scanner Interface** - Camera-based QR scanner for event staff to quickly validate tickets
-- **Attendee Management** - Track check-ins, manage guest lists, and view attendance analytics
+- Event discovery and ticketing
+- User authentication with Supabase
+- Interactive maps with OpenStreetMap
+- Dark mode support
+- Responsive design
 
-## Getting Started
+## Development
 
-For detailed setup instructions, please refer to [COMPLETE_SETUP.md](COMPLETE_SETUP.md).
-
-For deployment instructions, please refer to [DEPLOYMENT.md](DEPLOYMENT.md).
-
-### Quick Start
-
+1. Clone the repository:
 ```bash
-# Clone the repository
-git clone https://github.com/KelalGatewayProject/Kelal-Gateway.git
-cd Kelal-Gateway
+git clone https://github.com/your-username/kelal-gateway.git
+cd kelal-gateway
+```
 
-# Install dependencies
+2. Install dependencies:
+```bash
 npm install
+```
 
-# Set up environment variables (see COMPLETE_SETUP.md)
+3. Create a `.env` file with your environment variables:
+```env
+VITE_API_URL=your_api_url
+VITE_SUPABASE_URL=your_supabase_url
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+```
 
-# Start development server
+4. Start the development server:
+```bash
 npm run dev
 ```
 
-## Project Structure
+## Building for Production
 
-```
-├── backend/             # Backend server code
-│   ├── middleware/      # Express middleware
-│   ├── models/          # MongoDB models
-│   ├── routes/          # API routes
-│   ├── utils/           # Utility functions
-│   └── server.js        # Server entry point
-├── public/              # Static assets
-├── src/                 # Frontend React code
-│   ├── components/      # Reusable components
-│   ├── context/         # React context providers
-│   ├── lib/             # Utility libraries
-│   ├── pages/           # Page components
-│   └── App.tsx          # Main application component
-└── infrastructure/      # Deployment and infrastructure code
+1. Update `.env.production` with your production environment variables.
+
+2. Build the project:
+```bash
+npm run build
 ```
 
-## User Roles
+The built files will be in the `dist` directory.
 
-The application supports the following user roles:
+## Deployment to Render
 
-- **Admin**: Full access to all features, including user management and event approval
-- **Organizer**: Can create and manage events, staff, and view reports
-- **Member**: Regular users who can browse events and purchase tickets
-- **Attendee**: Users who have purchased tickets to events
-
-## Technologies Used
-
-- **Frontend**: React, TypeScript, Tailwind CSS, ShadCN UI
-- **Backend**: Node.js, Express, MongoDB
-- **Authentication**: JWT, Phone verification via Twilio
-- **QR Code**: html5-qrcode for scanning, custom QR generation
-- **Maps**: Leaflet, OpenStreetMap
+1. Create a new Static Site on Render.
+2. Connect your GitHub repository.
+3. Configure the following settings:
+   - Build Command: `npm install && npm run build`
+   - Publish Directory: `dist`
+4. Add your environment variables in the Render dashboard.
+5. Deploy!
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add some amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
 
 ## License
 
 This project is licensed under the MIT License - see the LICENSE file for details.
+
+# React + TypeScript + Vite
+
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+
+Currently, two official plugins are available:
+
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+
+## Expanding the ESLint configuration
+
+If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+
+- Configure the top-level `parserOptions` property like this:
+
+```js
+export default {
+  // other rules...
+  parserOptions: {
+    ecmaVersion: 'latest',
+    sourceType: 'module',
+    project: ['./tsconfig.json', './tsconfig.node.json'],
+    tsconfigRootDir: __dirname,
+  },
+}
+```
+
+- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
+- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
+- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list

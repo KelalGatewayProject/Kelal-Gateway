@@ -13,6 +13,23 @@ export interface EventCardProps {
   time: string;
   location?: string;
   locationCoords?: { lat: number; lng: number };
+  price?: number | string | { general?: string; vip?: string };
+  onFollow?: () => void;
+  isFollowing?: boolean;
+}
+
+// Update the Event interface to include general property
+interface Event {
+  general?: boolean;
+  id?: string;
+  imageUrl?: string;
+  image?: string;
+  title: string;
+  description?: string;
+  date: string;
+  time: string;
+  location?: string;
+  locationCoords?: { lat: number; lng: number };
   price?: number | string | React.ReactNode;
   onFollow?: () => void;
   isFollowing?: boolean;
@@ -131,7 +148,7 @@ function EventCard({
               <span className="font-bold text-sm font-roboto">{time}</span>
             </div>
             <div className="text-sm text-red-500 font-roboto">
-              {typeof price === "object" && price !== null
+              {typeof price === "object" && price !== null && !React.isValidElement(price)
                 ? `${price.general ? `General: ${price.general}` : ""}${price.vip ? (price.general ? " / " : "") + `VIP: ${price.vip}` : ""}`
                 : typeof price === "string" || typeof price === "number"
                   ? price

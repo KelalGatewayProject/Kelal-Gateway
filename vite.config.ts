@@ -3,28 +3,22 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import { tempo } from "tempo-devtools/dist/vite";
 
-const conditionalPlugins = [];
+const conditionalPlugins: [string, Record<string, any>][] = [];
 
 // @ts-ignore
 if (process.env.TEMPO === "true") {
-  conditionalPlugins.push(["tempo-devtools/dist/babel-plugin"]);
+  conditionalPlugins.push(["tempo-devtools/swc", {}]);
 }
 
 // https://vitejs.dev/config/
 export default defineConfig({
-  base:
-    process.env.NODE_ENV === "development"
-      ? "/"
-      : process.env.VITE_BASE_PATH || "/",
+  base: process.env.NODE_ENV === "development" ? "/" : process.env.VITE_BASE_PATH || "/",
   optimizeDeps: {
-    entries: ["src/main.tsx"],
-    include: ["react", "react-dom", "react-router-dom"],
+    entries: ["src/main.tsx", "src/tempobook/**/*"],
   },
   plugins: [
     react({
-      babel: {
-        plugins: [...conditionalPlugins],
-      },
+      plugins: conditionalPlugins,
     }),
     tempo(),
   ],
@@ -35,7 +29,24 @@ export default defineConfig({
     },
   },
   server: {
-    // @ts-ignore
-    allowedHosts: true,
+    port: 3000,
+    open: true,
   },
+  build: {
+    sourcemap: true,
+    rollupOptions: {
+      output: {
+        manualChunks: {
+          'react-vendor': ['react', 'react-dom'],
+          'ui-vendor': [
+            '@radix-ui/react-accordion',
+            '@radix-ui/react-alert-dialog',
+            '@radix-ui/react-avatar',
+            '@radix-ui/react-dialog',
+            '@radix-ui/react-dropdown-menu',
+          ],
+        },
+      },
+    },
+  }
 });
