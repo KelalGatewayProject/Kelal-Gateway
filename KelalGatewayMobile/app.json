@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "KelalGatewayMobile",
+    "name": "Kelal Gateway Mobile",
     "slug": "kelal-gateway-mobile",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -8,8 +8,36 @@
     "assetBundlePatterns": [
       "**/*"
     ],
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.kelalgateway.kelalgatewaymobile"
+    },
     "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
       "package": "com.kelalgateway.kelalgatewaymobile"
+    },
+    "plugins": [
+      "expo-router"
+    ],
+    "scheme": "kelal-gateway",
+    "platforms": [
+      "android",
+      "ios"
+    ],
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "kelal-gateway-mobile"
+      }
+    },
+    "experiments": {
+      "typedRoutes": true,
+      "tsconfigPaths": true
     }
   }
-} 
+}

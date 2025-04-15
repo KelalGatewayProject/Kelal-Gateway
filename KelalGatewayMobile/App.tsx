@@ -1,21 +1,15 @@
-import React from 'react';
-import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { useEffect } from 'react';
+import { SplashScreen } from 'expo-router';
+import { Slot } from 'expo-router';
 
-export default function App() {
-  return (
-    <View style={styles.container}>
-      <Text>Welcome to Kelal Gateway Mobile!</Text>
-      <StatusBar style="auto" />
-    </View>
-  );
-}
+// Prevent the splash screen from auto-hiding before asset loading is complete.
+SplashScreen.preventAutoHideAsync();
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-}); 
+export default function RootLayout() {
+  useEffect(() => {
+    // Tell the splash screen to hide
+    SplashScreen.hideAsync();
+  }, []);
+
+  return <Slot />;
+} 

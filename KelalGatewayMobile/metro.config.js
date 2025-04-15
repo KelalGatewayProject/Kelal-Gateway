@@ -1,22 +1,18 @@
-const { getDefaultConfig } = require('@react-native/metro-config');
+// Learn more https://docs.expo.dev/guides/customizing-metro
+const { getDefaultConfig } = require('expo/metro-config');
 
-module.exports = (async () => {
-  const {
-    resolver: { sourceExts, assetExts },
-  } = await getDefaultConfig();
-  return {
-    transformer: {
-      getTransformOptions: async () => ({
-        transform: {
-          experimentalImportSupport: false,
-          inlineRequires: true,
-        },
-      }),
-      babelTransformerPath: require.resolve('react-native-svg-transformer'),
-    },
-    resolver: {
-      assetExts: assetExts.filter(ext => ext !== 'svg'),
-      sourceExts: [...sourceExts, 'svg'],
-    },
-  };
-})(); 
+/** @type {import('expo/metro-config').MetroConfig} */
+const config = getDefaultConfig(__dirname, {
+  // Enable experimental features for expo-router
+  resolver: {
+    unstable_enablePackageExports: true,
+  },
+});
+
+// Add support for mjs files
+config.resolver.sourceExts.push('mjs');
+
+// Add support for native modules
+config.resolver.assetExts = [...config.resolver.assetExts, 'db', 'sqlite'];
+
+module.exports = config; 
