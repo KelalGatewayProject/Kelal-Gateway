@@ -1,0 +1,7 @@
+# This file has been deprecated and is kept only for reference purposes.
+# The application no longer uses AWS CloudFormation for deployment.
+# Please refer to DEPLOYMENT.md for current deployment instructions.
+
+# Historical CloudFormation template content has been removed to avoid confusion.
+# If you need to deploy to a cloud provider, please use the appropriate
+# deployment methods for that provider as outlined in the DEPLOYMENT.md file.

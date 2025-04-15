@@ -20,7 +20,6 @@ const VerifyCode: React.FC = () => {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // In a real app, we would verify the code with a backend
-    // For now, just navigate to register page
     navigate("/register");
   };
 
@@ -37,6 +36,7 @@ const VerifyCode: React.FC = () => {
               <Input
                 key={index}
                 type="text"
+                inputMode="numeric"
                 value={code[index] || ""}
                 onChange={(e) => {
                   const newCode = code.split("");
@@ -51,7 +51,7 @@ const VerifyCode: React.FC = () => {
                     if (nextInput) nextInput.focus();
                   }
                 }}
-                className="w-12 h-12 text-center text-lg font-bold bg-white shadow-sm border-gray-200"
+                className="w-12 h-12 text-center text-lg font-bold shadow-sm border-gray-200"
                 maxLength={1}
                 name={`code-${index}`}
                 autoComplete="one-time-code"
