@@ -32,13 +32,13 @@ function App() {
       }
     >
       <>
-        <Routes>
+    <Routes>
           <Route path="/" element={<Welcome />} />
           <Route path="/home" element={<Home />} />
-          <Route path="/phone-login" element={<PhoneLogin />} />
-          <Route path="/verify-code" element={<VerifyCode />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/login" element={<Login />} />
+      <Route path="/phone-login" element={<PhoneLogin />} />
+      <Route path="/verify-code" element={<VerifyCode />} />
+      <Route path="/register" element={<Register />} />
+      <Route path="/login" element={<Login />} />
           <Route path="/profile-setup" element={<ProfileSetup />} />
           <Route path="/app-settings" element={<AppSettings />} />
           <Route path="/calendar" element={<Calendar />} />
@@ -54,7 +54,7 @@ function App() {
           {import.meta.env.VITE_TEMPO === "true" && (
             <Route path="/tempobook/*" />
           )}
-        </Routes>
+    </Routes>
         {import.meta.env.VITE_TEMPO === "true" && useRoutes(routes)}
       </>
     </Suspense>

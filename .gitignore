@@ -23,6 +23,31 @@ dist-ssr
 *.sln
 *.sw?
 
+# Expo
+.expo/
+web-build/
+*.jks
+*.p8
+*.p12
+*.key
+*.mobileprovision
+*.orig.*
+web-build/
+
+# Cache directories
+.cache/
+.temp/
+.tmp/
+temp/
+
+# Environment variables
+.env
+.env.*
+!.env.example
+
+# Long filename directories
+KelalGatewayMobile/.expo/web/cache/
+
 !node_modules/.vite
 
 **/tempobook/dynamic/
